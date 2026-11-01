@@ -1,0 +1,9 @@
+# Dependencias de ejecución (Streamlit Community Cloud y uso local).
+# scikit-learn se fija a la versión exacta con la que se serializaron los
+# modelos de models/*.joblib (ver models/metadata.json -> entorno).
+streamlit==1.66.1
+scikit-learn==1.9.1
+pandas==3.0.5
+numpy==2.5.3
+plotly==7.1.0
+joblib==1.6.0

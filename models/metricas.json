@@ -1,0 +1,368 @@
+{
+  "modalidad": "completo",
+  "descripcion": "Información académica completa: datos de ingreso, socioeconómicos, macroeconómicos y rendimiento del 1.er y 2.º semestre.",
+  "criterio_seleccion": "Mayor f1_macro medio en validación cruzada estratificada de 5 pliegues sobre el conjunto de entrenamiento. El conjunto de prueba solo se usa para la evaluación final informativa.",
+  "modelo_seleccionado": "hgb",
+  "ranking_cv": [
+    "hgb",
+    "rf",
+    "logreg"
+  ],
+  "modelos": {
+    "logreg": {
+      "nombre": "Regresión Logística",
+      "mejores_hiperparametros": {
+        "C": 0.1,
+        "class_weight": "balanced"
+      },
+      "combinaciones_evaluadas": 8,
+      "cv": {
+        "accuracy": {
+          "media": 0.7584002589120897,
+          "desv": 0.0124413763655315
+        },
+        "balanced_accuracy": {
+          "media": 0.7242711944602478,
+          "desv": 0.0157095081872498
+        },
+        "f1_macro": {
+          "media": 0.7169070448036218,
+          "desv": 0.01426662644911915
+        },
+        "recall_Dropout": {
+          "media": 0.7361117551588221,
+          "desv": 0.020114196146788197
+        },
+        "recall_Enrolled": {
+          "media": 0.611023622047244,
+          "desv": 0.05019646441105266
+        },
+        "recall_Graduate": {
+          "media": 0.8256782061746772,
+          "desv": 0.019458755731481932
+        }
+      },
+      "prueba": {
+        "accuracy": 0.727683615819209,
+        "balanced_accuracy": 0.698107128403669,
+        "f1_macro": 0.687658775622403,
+        "f1_weighted": 0.7406159015867054,
+        "por_clase": {
+          "Dropout": {
+            "precision": 0.8099173553719008,
+            "recall": 0.6901408450704225,
+            "f1": 0.7452471482889734,
+            "soporte": 284
+          },
+          "Enrolled": {
+            "precision": 0.4092827004219409,
+            "recall": 0.610062893081761,
+            "f1": 0.4898989898989899,
+            "soporte": 159
+          },
+          "Graduate": {
+            "precision": 0.8645320197044335,
+            "recall": 0.7941176470588235,
+            "f1": 0.8278301886792453,
+            "soporte": 442
+          }
+        },
+        "matriz_confusion": {
+          "etiquetas": [
+            "Dropout",
+            "Enrolled",
+            "Graduate"
+          ],
+          "valores": [
+            [
+              196,
+              64,
+              24
+            ],
+            [
+              31,
+              97,
+              31
+            ],
+            [
+              15,
+              76,
+              351
+            ]
+          ]
+        },
+        "roc_auc_ovr_macro": 0.8848882833384759
+      },
+      "tiempo_busqueda_s": 8.0
+    },
+    "rf": {
+      "nombre": "Random Forest",
+      "mejores_hiperparametros": {
+        "class_weight": "balanced_subsample",
+        "max_depth": null,
+        "max_features": "sqrt",
+        "min_samples_leaf": 3
+      },
+      "combinaciones_evaluadas": 16,
+      "cv": {
+        "accuracy": {
+          "media": 0.7759223743197564,
+          "desv": 0.01361686043382651
+        },
+        "balanced_accuracy": {
+          "media": 0.7228962415743451,
+          "desv": 0.0173651078503708
+        },
+        "f1_macro": {
+          "media": 0.7255171366611993,
+          "desv": 0.01704386845807475
+        },
+        "recall_Dropout": {
+          "media": 0.7449300564185795,
+          "desv": 0.023871687758464714
+        },
+        "recall_Enrolled": {
+          "media": 0.5448818897637795,
+          "desv": 0.03706646392421991
+        },
+        "recall_Graduate": {
+          "media": 0.8788767785406764,
+          "desv": 0.015436173272228867
+        }
+      },
+      "prueba": {
+        "accuracy": 0.7672316384180791,
+        "balanced_accuracy": 0.7156945915797582,
+        "f1_macro": 0.7164299590972547,
+        "f1_weighted": 0.768927343462563,
+        "por_clase": {
+          "Dropout": {
+            "precision": 0.828,
+            "recall": 0.7288732394366197,
+            "f1": 0.7752808988764045,
+            "soporte": 284
+          },
+          "Enrolled": {
+            "precision": 0.4943181818181818,
+            "recall": 0.5471698113207547,
+            "f1": 0.5194029850746269,
+            "soporte": 159
+          },
+          "Graduate": {
+            "precision": 0.8387799564270153,
+            "recall": 0.8710407239819005,
+            "f1": 0.8546059933407325,
+            "soporte": 442
+          }
+        },
+        "matriz_confusion": {
+          "etiquetas": [
+            "Dropout",
+            "Enrolled",
+            "Graduate"
+          ],
+          "valores": [
+            [
+              207,
+              43,
+              34
+            ],
+            [
+              32,
+              87,
+              40
+            ],
+            [
+              11,
+              46,
+              385
+            ]
+          ]
+        },
+        "roc_auc_ovr_macro": 0.8898848009336128
+      },
+      "tiempo_busqueda_s": 65.5
+    },
+    "hgb": {
+      "nombre": "Gradient Boosting (HistGradientBoosting)",
+      "mejores_hiperparametros": {
+        "class_weight": "balanced",
+        "l2_regularization": 1.0,
+        "learning_rate": 0.05,
+        "max_leaf_nodes": 15
+      },
+      "combinaciones_evaluadas": 16,
+      "cv": {
+        "accuracy": {
+          "media": 0.7713982051958224,
+          "desv": 0.014738900431363113
+        },
+        "balanced_accuracy": {
+          "media": 0.7318406468114599,
+          "desv": 0.015584324800663046
+        },
+        "f1_macro": {
+          "media": 0.7282403235065831,
+          "desv": 0.015796832929152984
+        },
+        "recall_Dropout": {
+          "media": 0.7607349872478553,
+          "desv": 0.025647124428556545
+        },
+        "recall_Enrolled": {
+          "media": 0.5921259842519685,
+          "desv": 0.053496969295946536
+        },
+        "recall_Graduate": {
+          "media": 0.8426609689345561,
+          "desv": 0.01974596320235844
+        }
+      },
+      "prueba": {
+        "accuracy": 0.7457627118644068,
+        "balanced_accuracy": 0.7153754365459669,
+        "f1_macro": 0.7053786191617716,
+        "f1_weighted": 0.7559821633218428,
+        "por_clase": {
+          "Dropout": {
+            "precision": 0.8145161290322581,
+            "recall": 0.7112676056338029,
+            "f1": 0.7593984962406015,
+            "soporte": 284
+          },
+          "Enrolled": {
+            "precision": 0.4419642857142857,
+            "recall": 0.6226415094339622,
+            "f1": 0.5169712793733682,
+            "soporte": 159
+          },
+          "Graduate": {
+            "precision": 0.8692493946731235,
+            "recall": 0.8122171945701357,
+            "f1": 0.839766081871345,
+            "soporte": 442
+          }
+        },
+        "matriz_confusion": {
+          "etiquetas": [
+            "Dropout",
+            "Enrolled",
+            "Graduate"
+          ],
+          "valores": [
+            [
+              202,
+              57,
+              25
+            ],
+            [
+              31,
+              99,
+              29
+            ],
+            [
+              15,
+              68,
+              359
+            ]
+          ]
+        },
+        "roc_auc_ovr_macro": 0.8803024089862306
+      },
+      "tiempo_busqueda_s": 14.0
+    }
+  },
+  "importancia_permutacion_prueba": [
+    {
+      "variable": "cu_2nd_approved",
+      "etiqueta": "2.º sem.: unidades aprobadas",
+      "importancia_media": 0.21236872709702936,
+      "importancia_desv": 0.012297440914529521
+    },
+    {
+      "variable": "cu_1st_approved",
+      "etiqueta": "1.er sem.: unidades aprobadas",
+      "importancia_media": 0.0665864438631433,
+      "importancia_desv": 0.006123917989312407
+    },
+    {
+      "variable": "tuition_up_to_date",
+      "etiqueta": "Matrícula al día",
+      "importancia_media": 0.054218952077245176,
+      "importancia_desv": 0.005179510297477223
+    },
+    {
+      "variable": "cu_2nd_enrolled",
+      "etiqueta": "2.º sem.: unidades inscritas",
+      "importancia_media": 0.04567634559738537,
+      "importancia_desv": 0.007101682433008183
+    },
+    {
+      "variable": "course",
+      "etiqueta": "Programa académico",
+      "importancia_media": 0.02787136626660084,
+      "importancia_desv": 0.006817434358766589
+    },
+    {
+      "variable": "cu_1st_enrolled",
+      "etiqueta": "1.er sem.: unidades inscritas",
+      "importancia_media": 0.018449627830453664,
+      "importancia_desv": 0.006832221206972042
+    },
+    {
+      "variable": "father_occupation",
+      "etiqueta": "Ocupación del padre",
+      "importancia_media": 0.014632534248391338,
+      "importancia_desv": 0.005854971378268078
+    },
+    {
+      "variable": "age_at_enrollment",
+      "etiqueta": "Edad al matricularse",
+      "importancia_media": 0.012515871262876089,
+      "importancia_desv": 0.004197070851943788
+    },
+    {
+      "variable": "mother_occupation",
+      "etiqueta": "Ocupación de la madre",
+      "importancia_media": 0.008864361210546701,
+      "importancia_desv": 0.0027018938490970174
+    },
+    {
+      "variable": "cu_2nd_grade",
+      "etiqueta": "2.º sem.: promedio de notas",
+      "importancia_media": 0.008550768694290079,
+      "importancia_desv": 0.005468434298395155
+    },
+    {
+      "variable": "mother_qualification",
+      "etiqueta": "Nivel educativo de la madre",
+      "importancia_media": 0.008213265714516227,
+      "importancia_desv": 0.004497490065359362
+    },
+    {
+      "variable": "unemployment_rate",
+      "etiqueta": "Tasa de desempleo (Portugal)",
+      "importancia_media": 0.007954468820983296,
+      "importancia_desv": 0.004750313953216522
+    },
+    {
+      "variable": "cu_2nd_evaluations",
+      "etiqueta": "2.º sem.: evaluaciones presentadas",
+      "importancia_media": 0.007040667929177924,
+      "importancia_desv": 0.005269122059431667
+    },
+    {
+      "variable": "scholarship_holder",
+      "etiqueta": "Becario",
+      "importancia_media": 0.006653184387199251,
+      "importancia_desv": 0.0027903965844010992
+    },
+    {
+      "variable": "admission_grade",
+      "etiqueta": "Nota de admisión",
+      "importancia_media": 0.005406255275745541,
+      "importancia_desv": 0.0016957177336565704
+    }
+  ],
+  "generado_utc": "2026-11-01T13:51:28+00:00"
+}

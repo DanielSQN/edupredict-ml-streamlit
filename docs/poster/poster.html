@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Póster EduPredict AI</title>
+<style>
+@page { size: 594mm 841mm; margin: 0; }
+* { box-sizing: border-box; }
+body { margin:0; font-family: 'Segoe UI', Inter, Helvetica, Arial, sans-serif; color:#1B2433; background:#fff; }
+.poster { width:594mm; height:841mm; padding:18mm; display:flex; flex-direction:column; gap:9mm; }
+header { background:linear-gradient(120deg,#0B2545,#13315C); color:#fff; border-radius:8mm; padding:12mm 14mm;
+          display:flex; align-items:center; gap:12mm; }
+header h1 { font-size:62pt; margin:0; letter-spacing:-1px; }
+header h2 { font-size:26pt; margin:2mm 0 4mm; font-weight:500; color:#DCE3EE; }
+header p { font-size:19pt; margin:1mm 0; color:#DCE3EE; }
+.logo { width:70mm; height:45mm; object-fit:contain; background:#fff; border-radius:4mm; }
+.ph { border:2px dashed #9AA7BD; color:#5B6577; display:flex; align-items:center; justify-content:center;
+       border-radius:4mm; font-size:16pt; text-align:center; background:#F4F6FA; }
+header .ph { color:#DCE3EE; background:transparent; border-color:#DCE3EE; }
+.grid { display:grid; grid-template-columns: 1fr 1fr; gap:9mm; }
+.card { border:1px solid #E6E9EF; border-radius:6mm; padding:8mm 9mm; background:#fff; }
+.card h3 { margin:0 0 4mm; font-size:27pt; color:#0B2545; border-left:8px solid #13315C; padding-left:4mm; }
+.card p, .card li { font-size:18pt; line-height:1.4; margin:1.5mm 0; }
+.q { font-style:italic; color:#13315C; font-weight:600; }
+.kpis { display:flex; gap:5mm; margin-top:4mm; }
+.kpi { flex:1; background:#F4F6FA; border-radius:4mm; padding:4mm; text-align:center; }
+.kpi b { display:block; font-size:30pt; color:#0B2545; } .kpi span { font-size:14pt; color:#5B6577; }
+.flow { display:flex; align-items:center; justify-content:space-between; gap:2mm; }
+.step { flex:1; background:#13315C; color:#fff; border-radius:4mm; padding:5mm 2mm; text-align:center; font-size:15pt; font-weight:600; min-height:24mm; display:flex; align-items:center; justify-content:center; }
+.arrow { font-size:26pt; color:#13315C; }
+table { width:100%; border-collapse:collapse; font-size:17pt; }
+th, td { padding:2.5mm 3mm; border-bottom:1px solid #E6E9EF; text-align:center; }
+th { color:#5B6577; font-weight:600; } td:first-child, th:first-child { text-align:left; }
+tr.win td { background:#E8EEF7; font-weight:700; }
+td.diag { background:#13315C; color:#fff; font-weight:700; }
+.dot { display:inline-block; width:4mm; height:4mm; border-radius:50%; margin-right:2mm; }
+.imp { display:grid; grid-template-columns: 95mm 1fr 22mm; align-items:center; gap:3mm; font-size:15pt; margin:2mm 0; }
+.imp .bar { height:6mm; background:#13315C; border-radius:0 2mm 2mm 0; }
+.shot { width:100%; height:125mm; object-fit:cover; object-position:top; border-radius:4mm; border:1px solid #E6E9EF; }
+.refs li { font-size:13pt; }
+.qrs { display:flex; gap:8mm; } .qrbox { flex:1; display:flex; gap:4mm; align-items:center; font-size:14pt; }
+.qrbox img, .ph.qr { width:38mm; height:38mm; flex:none; }
+.note { font-size:13pt; color:#5B6577; }
+</style></head><body><div class="poster">
+<header><div class="ph logo">[Logo oficial CUN]</div><div>
+<h1>EduPredict AI</h1>
+<h2>Predicción de deserción universitaria con Machine Learning clásico</h2>
+<p><b>[Nombres completos de los integrantes]</b></p>
+<p>Docente: [Docente] · Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN</p>
+</div></header>
+
+<div class="grid">
+ <div class="card"><h3>Problema</h3>
+  <p>La deserción universitaria suele detectarse cuando ya es tarde para intervenir.</p>
+  <p class="q">¿Cómo transformar datos educativos en conocimiento predictivo para anticipar la deserción de un estudiante y facilitar la identificación de posibles situaciones de riesgo académico?</p></div>
+ <div class="card"><h3>Objetivo</h3><p>Desarrollar una solución de Machine Learning clásico que permita analizar información académica, entrenar y comparar modelos de clasificación, evaluar su desempeño y presentar predicciones mediante una aplicación interactiva de Streamlit.</p></div>
+</div>
+
+<div class="card"><h3>Dataset — UCI 697 · Predict Students' Dropout and Academic Success</h3>
+ <div class="kpis">
+  <div class="kpi"><b>4.424</b><span>estudiantes</span></div>
+  <div class="kpi"><b>36</b><span>variables predictoras</span></div>
+  <div class="kpi"><b style="color:#D62F4B">32,1 %</b><span>Deserción</span></div>
+  <div class="kpi"><b style="color:#D99000">17,9 %</b><span>Matriculado</span></div>
+  <div class="kpi"><b style="color:#2A78D6">49,9 %</b><span>Graduado</span></div>
+ </div></div>
+
+<div class="card"><h3>Metodología</h3><div class="flow"><div class='step'>Datos UCI 697</div><div class='arrow'>→</div><div class='step'>Limpieza determinista</div><div class='arrow'>→</div><div class='step'>Split estratificado 80/20</div><div class='arrow'>→</div><div class='step'>Pipelines sin fuga</div><div class='arrow'>→</div><div class='step'>GridSearchCV 5-fold<br>(macro-F1)</div><div class='arrow'>→</div><div class='step'>Selección por CV</div><div class='arrow'>→</div><div class='step'>Evaluación en prueba</div><div class='arrow'>→</div><div class='step'>App Streamlit</div></div>
+ <p class="note">Algoritmos: Regresión Logística · Random Forest · HistGradientBoosting. Desbalance tratado con
+ <code>class_weight</code> como hiperparámetro. Modelo adicional de alerta temprana sin variables del 2.º semestre.</p></div>
+
+<div class="grid">
+ <div class="card"><h3>Comparación de modelos (prueba, n = 885)</h3>
+  <table><tr><th>Modelo</th><th>Macro-F1 CV</th><th>Accuracy</th><th>Macro-F1</th><th>Bal. acc.</th></tr><tr><td>Regresión Logística</td><td>0,717</td><td>0,728</td><td>0,688</td><td>0,698</td></tr><tr><td>Random Forest</td><td>0,726</td><td>0,767</td><td>0,716</td><td>0,716</td></tr><tr class="win"><td>★ Gradient Boosting (HistGradientBoosting)</td><td>0,728</td><td>0,746</td><td>0,705</td><td>0,715</td></tr></table>
+  <p class="note">Selección por macro-F1 medio en validación cruzada de 5 pliegues; el conjunto de prueba no interviene en la selección.</p>
+  <table><tr><th>Clase (Gradient Boosting)</th><th>Precisión</th><th>Recall</th><th>F1</th></tr><tr><td><span class='dot' style='background:#D62F4B'></span>Deserción</td><td>0,815</td><td>0,711</td><td>0,759</td></tr><tr><td><span class='dot' style='background:#D99000'></span>Matriculado</td><td>0,442</td><td>0,623</td><td>0,517</td></tr><tr><td><span class='dot' style='background:#2A78D6'></span>Graduado</td><td>0,869</td><td>0,812</td><td>0,840</td></tr></table>
+ </div>
+ <div class="card"><h3>Matriz de confusión e importancia</h3>
+  <table><tr><th>Real \ Pred.</th><th>Deserción</th><th>Matriculado</th><th>Graduado</th></tr><tr><th>Deserción</th><td class='diag'>202</td><td class=''>57</td><td class=''>25</td></tr><tr><th>Matriculado</th><td class=''>31</td><td class='diag'>99</td><td class=''>29</td></tr><tr><th>Graduado</th><td class=''>15</td><td class=''>68</td><td class='diag'>359</td></tr></table><br><div class='imp'><span>2.º sem.: unidades aprobadas</span><div class='bar' style='width:100%'></div><b>0,212</b></div><div class='imp'><span>1.er sem.: unidades aprobadas</span><div class='bar' style='width:31%'></div><b>0,067</b></div><div class='imp'><span>Matrícula al día</span><div class='bar' style='width:26%'></div><b>0,054</b></div><div class='imp'><span>2.º sem.: unidades inscritas</span><div class='bar' style='width:22%'></div><b>0,046</b></div><div class='imp'><span>Programa académico</span><div class='bar' style='width:13%'></div><b>0,028</b></div><div class='imp'><span>1.er sem.: unidades inscritas</span><div class='bar' style='width:9%'></div><b>0,018</b></div>
+  <p class="note">Importancia por permutación: caída de macro-F1 al permutar cada variable (asociación, no causalidad).</p>
+  <p><b>Alerta temprana</b> (Gradient Boosting): macro-F1 CV 0,698 ·
+  macro-F1 prueba 0,675 · accuracy 0,720.</p>
+ </div>
+</div>
+
+<div class="grid">
+ <div class="card"><h3>Aplicación Streamlit</h3><img class="shot" src="../capturas/prediccion.png" alt="Captura"></div>
+ <div class="card"><h3>Conclusiones</h3><ul>
+  <li>Los tres algoritmos obtienen desempeños cercanos; Gradient Boosting fue seleccionado por validación cruzada.</li>
+  <li>Las unidades aprobadas por semestre y la matrícula al día son las variables de las que más depende el modelo.</li>
+  <li><i>Matriculado</i> es la clase más difícil (F1 0,517).</li>
+  <li>Con información del 1.er semestre ya es posible una alerta temprana útil, un semestre antes.</li>
+  <li>Herramienta académica: identifica asociaciones, no causas, y no reemplaza decisiones institucionales.</li>
+ </ul></div>
+</div>
+
+<div class="grid">
+ <div class="card refs"><h3>Referencias</h3><ul><li>Realinho, V., Vieira Martins, M., Machado, J., &amp; Baptista, L. (2021). Predict Students&#x27; Dropout and Academic Success [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5MC89</li><li>Realinho, V., Machado, J., Baptista, L., &amp; Martins, M. V. (2022). Predicting student dropout and academic success. Data, 7(11), 146. https://doi.org/10.3390/data7110146</li><li>Martins, M. V., Tolledo, D., Machado, J., Baptista, L. M. T., &amp; Realinho, V. (2021). Early prediction of student&#x27;s performance in higher education: A case study. En Trends and Applications in Information Systems and Technologies (pp. 166–175). Springer. https://doi.org/10.1007/978-3-030-72657-7_16</li><li>Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., … Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. Journal of Machine Learning Research, 12, 2825–2830.</li></ul></div>
+ <div class="card"><h3>Enlaces</h3><div class="qrs"><div class='qrbox'><div class="ph qr">[QR]</div><div><b>App</b><br>[URL pública pendiente]</div></div><div class='qrbox'><div class="ph qr">[QR]</div><div><b>Video</b><br>[URL pública pendiente]</div></div><div class='qrbox'><div class="ph qr">[QR]</div><div><b>Repositorio</b><br>https://github.com/DanielSQN/edupredict-ml-streamlit</div></div></div></div>
+</div>
+</div></body></html>
