@@ -5,19 +5,25 @@ Uso::
     python -m src.train            # usa data/data.csv
     python -m src.train --download # descarga primero el CSV oficial de UCI
 
-Protocolo (idéntico para las dos modalidades, *completo* y *temprano*):
+Protocolo (idéntico para las dos modalidades, *completo* y *temprano*), basado
+en la Parte 3–4 del notebook borrador ``ACA1_Borrador_Student_Dropout``:
 
 1. Limpieza determinista (``data_loader.clean_dataset``).
-2. División estratificada 80/20 con ``RANDOM_STATE`` fijo. El 20 % de prueba
+2. División estratificada 80/20 con ``RANDOM_STATE = 42``. El 20 % de prueba
    se aparta y **no** interviene en ninguna decisión de modelado.
 3. Para cada algoritmo (regresión logística, random forest,
    HistGradientBoosting): ``GridSearchCV`` con validación cruzada estratificada
-   de 5 pliegues sobre el 80 % de entrenamiento, optimizando **macro-F1**. La
-   rejilla incluye la estrategia de desbalance (sin ponderar vs. pesos
-   balanceados) para que la decisión sea empírica.
-4. Selección del modelo ganador por macro-F1 medio de validación cruzada.
-5. Evaluación final de los tres modelos en prueba (solo informativa) y
-   exportación del pipeline ganador reentrenado sobre el 80 % de entrenamiento.
+   de 5 pliegues sobre el 80 % de entrenamiento, optimizando **macro-F1**. Las
+   rejillas son las del borrador, ampliadas con dos decisiones que antes eran
+   fijas y ahora se validan empíricamente: la ponderación de clases y (solo en
+   la regresión logística) la winsorización IQR.
+4. Selección del modelo ganador por macro-F1 medio de validación cruzada
+   (corrección respecto al borrador, que elegía con el conjunto de prueba).
+5. Evaluación final de los tres modelos en prueba (informativa) y
+   exportación del pipeline ganador.
+
+El notebook usa ``fit_modality`` para ejecutar exactamente este mismo
+entrenamiento y ``export_modality`` para guardar los artefactos.
 """
 
 from __future__ import annotations
@@ -28,6 +34,7 @@ import json
 import logging
 import platform
 import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -44,7 +51,9 @@ from src import data_dictionary as dd
 from src.data_loader import RAW_PATH, ROOT, clean_dataset, consistency_report, load_raw, save_clean
 from src.evaluate import compute_metrics, cv_scoring, permutation_importances, summarize_cv
 from src.predict import artifact_paths
-from src.preprocessing import EARLY, FULL, AcademicFeatureEngineer, FeatureSet, build_preprocessor
+from src.preprocessing import (
+    EARLY, FULL, AcademicFeatureEngineer, FeatureSet, WinsorizadorIQR, build_preprocessor,
+)
 
 logger = logging.getLogger("edupredict.train")
 
@@ -60,46 +69,125 @@ MODEL_NAMES = {
     "hgb": "Gradient Boosting (HistGradientBoosting)",
 }
 
-def build_estimator(kind: str, fs: FeatureSet):
-    """Devuelve (pipeline, rejilla de hiperparámetros) para un algoritmo."""
+
+def build_estimator(kind: str, fs: FeatureSet, default_class_weight: str | None = None):
+    """Devuelve (pipeline, rejilla de hiperparámetros) para un algoritmo.
+
+    Estructura del pipeline: ``features`` (tasas de aprobación, sin estado) →
+    ``winsor`` (``passthrough`` por defecto) → ``prep`` (ColumnTransformer
+    específico) → ``clf``. ``default_class_weight`` solo afecta al estimador
+    sin ajustar (útil para la CV base del notebook).
+    """
     if kind == "logreg":
-        clf = LogisticRegression(max_iter=5000, random_state=RANDOM_STATE)
+        clf = LogisticRegression(max_iter=5000, random_state=RANDOM_STATE, class_weight=default_class_weight)
         grid = {
-            "clf__C": [0.01, 0.1, 1.0, 10.0],
+            "winsor": ["passthrough", WinsorizadorIQR()],
+            "clf__C": [0.01, 0.03, 0.1, 0.3, 1.0, 3.0],
             "clf__class_weight": [None, "balanced"],
         }
     elif kind == "rf":
-        clf = RandomForestClassifier(n_estimators=400, random_state=RANDOM_STATE, n_jobs=1)
+        cw = "balanced_subsample" if default_class_weight else None
+        clf = RandomForestClassifier(n_estimators=300, random_state=RANDOM_STATE, n_jobs=1, class_weight=cw)
         grid = {
-            "clf__max_depth": [None, 15],
-            "clf__min_samples_leaf": [1, 3],
-            "clf__max_features": ["sqrt", 0.3],
+            "clf__max_depth": [8, 12, None],
+            "clf__min_samples_leaf": [1, 3, 5],
+            "clf__max_features": ["sqrt", 0.5],
             "clf__class_weight": [None, "balanced_subsample"],
         }
     elif kind == "hgb":
-        n_nominal = len(fs.nominal)
         clf = HistGradientBoostingClassifier(
-            max_iter=400,
-            early_stopping=True,
-            validation_fraction=0.1,
-            n_iter_no_change=20,
-            categorical_features=list(range(n_nominal)),
+            early_stopping=False,
+            categorical_features=list(range(len(fs.nominal))),  # categóricas nativas
             random_state=RANDOM_STATE,
+            class_weight=default_class_weight,
         )
         grid = {
-            "clf__learning_rate": [0.05, 0.1],
-            "clf__max_leaf_nodes": [15, 31],
-            "clf__l2_regularization": [0.0, 1.0],
+            "clf__learning_rate": [0.03, 0.1],
+            "clf__max_depth": [3, 6],
+            "clf__min_samples_leaf": [20, 40],
+            "clf__max_iter": [150, 300],
             "clf__class_weight": [None, "balanced"],
         }
     else:  # pragma: no cover
         raise ValueError(kind)
     pipe = Pipeline([
         ("features", AcademicFeatureEngineer(semesters=fs.semesters)),
+        ("winsor", "passthrough"),
         ("prep", build_preprocessor(kind, fs)),
         ("clf", clf),
     ])
     return pipe, grid
+
+
+def split_data(df: pd.DataFrame, fs: FeatureSet):
+    """Partición estratificada 80/20 reproducible (misma para ambas modalidades)."""
+    X = df[fs.raw_columns].copy()
+    y = df[dd.TARGET].copy()
+    return train_test_split(X, y, test_size=TEST_SIZE, stratify=y, random_state=RANDOM_STATE)
+
+
+def make_cv() -> StratifiedKFold:
+    return StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
+
+
+def _param_repr(v):
+    if isinstance(v, (np.integer,)):
+        return int(v)
+    if isinstance(v, (np.floating,)):
+        return float(v)
+    if isinstance(v, WinsorizadorIQR):
+        return f"WinsorizadorIQR(k={v.k})"
+    return v
+
+
+@dataclass
+class ModalityResult:
+    fs: FeatureSet
+    X_train: pd.DataFrame
+    X_test: pd.DataFrame
+    y_train: pd.Series
+    y_test: pd.Series
+    searches: dict = field(default_factory=dict)
+    results: dict = field(default_factory=dict)
+    winner: str = ""
+
+    @property
+    def best_pipeline(self):
+        return self.searches[self.winner].best_estimator_
+
+
+def fit_modality(df: pd.DataFrame, fs: FeatureSet, n_jobs: int = -1) -> ModalityResult:
+    """Ejecuta GridSearchCV para los tres algoritmos y selecciona por CV."""
+    X_train, X_test, y_train, y_test = split_data(df, fs)
+    res = ModalityResult(fs, X_train, X_test, y_train, y_test)
+    scoring = cv_scoring()
+    for kind in MODEL_NAMES:
+        pipe, grid = build_estimator(kind, fs)
+        search = GridSearchCV(pipe, grid, scoring=scoring, refit=SELECTION_METRIC, cv=make_cv(),
+                              n_jobs=n_jobs, return_train_score=True, error_score="raise")
+        t0 = time.perf_counter()
+        logger.info("[%s] GridSearchCV %s (%d combinaciones)", fs.name, kind,
+                    int(np.prod([len(v) for v in grid.values()])))
+        search.fit(X_train, y_train)
+        best = search.best_estimator_
+        test = compute_metrics(y_test, best.predict(X_test), best.predict_proba(X_test),
+                               classes=list(best.classes_))
+        res.searches[kind] = search
+        res.results[kind] = {
+            "nombre": MODEL_NAMES[kind],
+            "mejores_hiperparametros": {k.replace("clf__", ""): _param_repr(v)
+                                        for k, v in search.best_params_.items()},
+            "combinaciones_evaluadas": int(len(search.cv_results_["params"])),
+            "cv": summarize_cv(search, list(scoring)),
+            "prueba": test,
+            "tiempo_busqueda_s": round(time.perf_counter() - t0, 1),
+        }
+        cv = res.results[kind]["cv"]["f1_macro"]
+        logger.info("[%s] %s CV macro-F1=%.4f ± %.4f (train %.4f) | prueba macro-F1=%.4f", fs.name, kind,
+                    cv["media"], cv["desv"], cv["media_train"], test["f1_macro"])
+    # Selección SOLO con validación cruzada (el conjunto de prueba no interviene).
+    res.winner = max(res.results, key=lambda k: res.results[k]["cv"][SELECTION_METRIC]["media"])
+    return res
 
 
 def file_sha256(path: Path) -> str:
@@ -110,61 +198,18 @@ def file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def _jsonable(v):
-    if isinstance(v, (np.integer,)):
-        return int(v)
-    if isinstance(v, (np.floating,)):
-        return float(v)
-    return v
-
-
-def train_modality(df: pd.DataFrame, fs: FeatureSet, out_dir: Path, n_jobs: int = -1) -> dict:
-    """Entrena, compara y exporta los modelos de una modalidad."""
-    X = df[fs.raw_columns].copy()
-    y = df[dd.TARGET].copy()
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=TEST_SIZE, stratify=y, random_state=RANDOM_STATE
-    )
-    cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
-    scoring = cv_scoring()
-
-    results, searches = {}, {}
-    for kind in MODEL_NAMES:
-        pipe, grid = build_estimator(kind, fs)
-        search = GridSearchCV(pipe, grid, scoring=scoring, refit=SELECTION_METRIC,
-                              cv=cv, n_jobs=n_jobs, error_score="raise")
-        t0 = time.perf_counter()
-        logger.info("[%s] GridSearchCV %s (%d combinaciones)", fs.name, kind,
-                    int(np.prod([len(v) for v in grid.values()])))
-        search.fit(X_train, y_train)
-        elapsed = time.perf_counter() - t0
-        searches[kind] = search
-        best = search.best_estimator_
-        test = compute_metrics(y_test, best.predict(X_test), best.predict_proba(X_test),
-                               classes=list(best.classes_))
-        results[kind] = {
-            "nombre": MODEL_NAMES[kind],
-            "mejores_hiperparametros": {k.replace("clf__", ""): _jsonable(v)
-                                        for k, v in search.best_params_.items()},
-            "combinaciones_evaluadas": int(len(search.cv_results_["params"])),
-            "cv": summarize_cv(search, list(scoring)),
-            "prueba": test,
-            "tiempo_busqueda_s": round(elapsed, 1),
-        }
-        logger.info("[%s] %s CV macro-F1=%.4f ± %.4f | prueba macro-F1=%.4f", fs.name, kind,
-                    results[kind]["cv"]["f1_macro"]["media"], results[kind]["cv"]["f1_macro"]["desv"],
-                    test["f1_macro"])
-
-    # Selección SOLO con validación cruzada (el conjunto de prueba no interviene).
-    winner = max(results, key=lambda k: results[k]["cv"][SELECTION_METRIC]["media"])
-    ranking = sorted(results, key=lambda k: results[k]["cv"][SELECTION_METRIC]["media"], reverse=True)
-    best_pipe = searches[winner].best_estimator_
-    importances = permutation_importances(best_pipe, X_test, y_test, random_state=RANDOM_STATE)
+def export_modality(res: ModalityResult, df: pd.DataFrame, out_dir: Path = MODELS_DIR) -> dict:
+    """Guarda el pipeline ganador, sus métricas y metadatos. Devuelve las métricas."""
+    fs, winner = res.fs, res.winner
+    best_pipe = res.best_pipeline
+    importances = permutation_importances(best_pipe, res.X_test, res.y_test, random_state=RANDOM_STATE)
+    ranking = sorted(res.results, key=lambda k: res.results[k]["cv"][SELECTION_METRIC]["media"], reverse=True)
 
     paths = artifact_paths(fs.name, out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     joblib.dump(best_pipe, paths["modelo"], compress=3)
 
+    generated = datetime.now(timezone.utc).isoformat(timespec="seconds")
     metricas = {
         "modalidad": fs.name,
         "descripcion": fs.description,
@@ -175,17 +220,13 @@ def train_modality(df: pd.DataFrame, fs: FeatureSet, out_dir: Path, n_jobs: int 
         ),
         "modelo_seleccionado": winner,
         "ranking_cv": ranking,
-        "modelos": results,
+        "modelos": res.results,
         "importancia_permutacion_prueba": importances,
-        "generado_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generado_utc": generated,
     }
     paths["metricas"].write_text(json.dumps(metricas, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    train_stats = {}
-    for c in fs.numeric:
-        s = X_train[c]
-        train_stats[c] = {"min": _jsonable(s.min()), "max": _jsonable(s.max()),
-                          "mediana": _jsonable(s.median())}
+    X_train, y_train = res.X_train, res.y_train
     metadata = {
         "proyecto": "EduPredict AI",
         "modalidad": fs.name,
@@ -193,28 +234,28 @@ def train_modality(df: pd.DataFrame, fs: FeatureSet, out_dir: Path, n_jobs: int 
         "archivo_modelo": paths["modelo"].name,
         "algoritmo": winner,
         "algoritmo_nombre": MODEL_NAMES[winner],
-        "hiperparametros": results[winner]["mejores_hiperparametros"],
+        "hiperparametros": res.results[winner]["mejores_hiperparametros"],
         "clases": [str(c) for c in best_pipe.classes_],
         "columnas_entrada": fs.raw_columns,
         "columnas_nominales": list(fs.nominal),
         "columnas_binarias": list(fs.binary),
         "columnas_numericas": list(fs.numeric),
         "columnas_derivadas": fs.engineered,
-        "categorias_entrenamiento": {
-            c: sorted(int(v) for v in X_train[c].unique()) for c in fs.nominal
+        "categorias_entrenamiento": {c: sorted(int(v) for v in X_train[c].unique()) for c in fs.nominal},
+        "modas_entrenamiento": {c: int(X_train[c].mode().iloc[0]) for c in list(fs.nominal) + list(fs.binary)},
+        "estadisticas_numericas_entrenamiento": {
+            c: {"min": _param_repr(X_train[c].min()), "max": _param_repr(X_train[c].max()),
+                "mediana": _param_repr(X_train[c].median())}
+            for c in fs.numeric
         },
-        "modas_entrenamiento": {
-            c: int(X_train[c].mode().iloc[0]) for c in list(fs.nominal) + list(fs.binary)
-        },
-        "estadisticas_numericas_entrenamiento": train_stats,
         "particion": {
             "test_size": TEST_SIZE,
             "estratificada": True,
             "random_state": RANDOM_STATE,
             "n_entrenamiento": int(len(X_train)),
-            "n_prueba": int(len(X_test)),
+            "n_prueba": int(len(res.X_test)),
             "distribucion_entrenamiento": {k: int(v) for k, v in y_train.value_counts().items()},
-            "distribucion_prueba": {k: int(v) for k, v in y_test.value_counts().items()},
+            "distribucion_prueba": {k: int(v) for k, v in res.y_test.value_counts().items()},
         },
         "validacion_cruzada": {"tipo": "StratifiedKFold", "n_splits": CV_FOLDS, "shuffle": True,
                                "random_state": RANDOM_STATE, "metrica_refit": SELECTION_METRIC},
@@ -235,11 +276,16 @@ def train_modality(df: pd.DataFrame, fs: FeatureSet, out_dir: Path, n_jobs: int 
             "joblib": joblib.__version__,
         },
         "regenerar": "python -m src.train",
-        "generado_utc": metricas["generado_utc"],
+        "generado_utc": generated,
     }
     paths["metadata"].write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
     logger.info("[%s] Modelo seleccionado: %s -> %s", fs.name, winner, paths["modelo"])
     return metricas
+
+
+def train_modality(df: pd.DataFrame, fs: FeatureSet, out_dir: Path = MODELS_DIR, n_jobs: int = -1) -> dict:
+    """Atajo: ``fit_modality`` + ``export_modality``."""
+    return export_modality(fit_modality(df, fs, n_jobs=n_jobs), df, out_dir)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -261,6 +307,7 @@ def main(argv: list[str] | None = None) -> None:
         w = m["modelo_seleccionado"]
         summary[fs.name] = {
             "modelo": w,
+            "hiperparametros": m["modelos"][w]["mejores_hiperparametros"],
             "cv_f1_macro": m["modelos"][w]["cv"]["f1_macro"]["media"],
             "prueba_f1_macro": m["modelos"][w]["prueba"]["f1_macro"],
             "prueba_accuracy": m["modelos"][w]["prueba"]["accuracy"],

@@ -18,6 +18,7 @@ estos registros sesgaría precisamente al grupo con mayor deserción.
 from __future__ import annotations
 
 import io
+import re
 import logging
 import urllib.request
 import zipfile
@@ -79,6 +80,19 @@ def load_raw(path: Path = RAW_PATH, download_if_missing: bool = False) -> pd.Dat
 # ---------------------------------------------------------------------------
 # Limpieza
 # ---------------------------------------------------------------------------
+def normalizar_nombre(col: str) -> str:
+    """Normalización de nombres del notebook borrador.
+
+    ``"Mother's qualification" -> "mothers_qualification"``. Además se corrige la
+    errata ``Nacionality -> nationality``. ``COLUMN_MAP`` (data_dictionary) es el
+    resultado de aplicar esta función a las columnas de UCI; una prueba verifica
+    que ambos coincidan.
+    """
+    col = str(col).replace("\ufeff", "").strip().lower().replace("'", "")
+    col = re.sub(r"[^a-z0-9]+", "_", col).strip("_")
+    return "nationality" if col == "nacionality" else col
+
+
 def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """Quita BOM, tabuladores y espacios sobrantes; renombra a snake_case."""
     out = df.copy()
@@ -95,13 +109,13 @@ def cast_types(df: pd.DataFrame) -> pd.DataFrame:
     int_cols = dd.NOMINAL_FEATURES + dd.BINARY_FEATURES + [
         c
         for c in dd.NUMERIC_FEATURES
-        if c not in {"previous_qualification_grade", "admission_grade", "cu_1st_grade",
-                     "cu_2nd_grade", "unemployment_rate", "inflation_rate", "gdp"}
+        if c not in {"previous_qualification_grade", "admission_grade", "curricular_units_1st_sem_grade",
+                     "curricular_units_2nd_sem_grade", "unemployment_rate", "inflation_rate", "gdp"}
     ]
     for c in int_cols:
         out[c] = pd.to_numeric(out[c], errors="raise").astype("int64")
-    for c in ["previous_qualification_grade", "admission_grade", "cu_1st_grade",
-              "cu_2nd_grade", "unemployment_rate", "inflation_rate", "gdp"]:
+    for c in ["previous_qualification_grade", "admission_grade", "curricular_units_1st_sem_grade",
+              "curricular_units_2nd_sem_grade", "unemployment_rate", "inflation_rate", "gdp"]:
         out[c] = pd.to_numeric(out[c], errors="raise").astype("float64")
     out[dd.TARGET] = out[dd.TARGET].astype(str).str.strip()
     return out
@@ -123,13 +137,33 @@ def consistency_report(df: pd.DataFrame) -> dict:
             if n:
                 report["fuera_de_rango"][col] = n
     for sem in ("1st", "2nd"):
-        enr, app = df[f"cu_{sem}_enrolled"], df[f"cu_{sem}_approved"]
-        grade = df[f"cu_{sem}_grade"]
+        enr, app = df[f"curricular_units_{sem}_sem_enrolled"], df[f"curricular_units_{sem}_sem_approved"]
+        grade = df[f"curricular_units_{sem}_sem_grade"]
         report["reglas"][f"aprobadas_mayor_inscritas_{sem}"] = int((app > enr).sum())
         report["reglas"][f"nota_positiva_sin_aprobadas_{sem}"] = int(((app == 0) & (grade > 0)).sum())
         report["reglas"][f"sin_inscripcion_{sem}"] = int((enr == 0).sum())
     report["clases_no_validas"] = int((~df[dd.TARGET].isin(dd.CLASSES)).sum())
+    report["casos_atipicos_marcados"] = int(soft_rule_flags(df).sum())
     return report
+
+
+def soft_rule_flags(df: pd.DataFrame) -> pd.Series:
+    """Reglas "blandas" del notebook borrador: casos atípicos pero posibles.
+
+    No se eliminan (p. ej. un desertor con 0 materias inscritas es un caso real);
+    solo se marcan para auditoría. Devuelve una Serie booleana por fila.
+    """
+    s1, s2 = "curricular_units_1st_sem_", "curricular_units_2nd_sem_"
+    rules = [
+        df[s1 + "approved"] > df[s1 + "enrolled"],
+        df[s2 + "approved"] > df[s2 + "enrolled"],
+        (df[s1 + "grade"] > 0) & (df[s1 + "enrolled"] == 0),
+        (df[s2 + "grade"] > 0) & (df[s2 + "enrolled"] == 0),
+        (df[s1 + "enrolled"] > 0) & (df[s1 + "grade"] == 0),
+        (df[s2 + "enrolled"] > 0) & (df[s2 + "grade"] == 0),
+        (df[s1 + "enrolled"] == 0) & (df[s2 + "enrolled"] == 0),
+    ]
+    return pd.concat(rules, axis=1).any(axis=1)
 
 
 def clean_dataset(df_raw: pd.DataFrame, strict: bool = True) -> pd.DataFrame:

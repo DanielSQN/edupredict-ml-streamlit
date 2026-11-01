@@ -47,7 +47,7 @@ def test_metadata_and_metrics_are_consistent(modality):
 
 def test_early_model_does_not_use_second_semester():
     meta = load_metadata("temprano")
-    assert not any(c.startswith("cu_2nd") for c in meta["columnas_entrada"] + meta["columnas_derivadas"])
+    assert not any(c.startswith("curricular_units_2nd") for c in meta["columnas_entrada"] + meta["columnas_derivadas"])
     model = load_model("temprano")
     used = list(model.named_steps["prep"].get_feature_names_out())
     assert not any("2nd" in c for c in used)
@@ -91,7 +91,7 @@ def test_unseen_category_predicts_with_warning(data):
 
 def test_invalid_input_raises(data):
     rec = data[FULL.raw_columns].iloc[0].to_dict()
-    rec["cu_1st_grade"] = 30
+    rec["curricular_units_1st_sem_grade"] = 30
     with pytest.raises(SchemaError):
         predict_one(rec, "completo")
     rec = data[EARLY.raw_columns].iloc[0].to_dict()

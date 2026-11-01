@@ -10,7 +10,7 @@
 - **[LOGO OFICIAL CUN]** (insertar archivo oficial en `docs/poster/logo_cun.png`)
 - **Título:** EduPredict AI — Predicción de deserción universitaria con Machine Learning clásico
 - **Integrantes:** [Nombre completo 1], [Nombre completo 2], [Nombre completo 3]
-- **Docente:** [Nombre del docente]
+- **Docente:** Dr. Hamilton Rivera Flor
 - Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN · [Periodo académico]
 
 ## Problema
@@ -22,7 +22,9 @@ La deserción universitaria suele detectarse cuando ya es tarde para intervenir.
 
 Desarrollar una solución de Machine Learning clásico que permita analizar información académica, entrenar y comparar modelos de clasificación, evaluar su desempeño y presentar predicciones mediante una aplicación interactiva de Streamlit.
 
-## Dataset
+## Pilar y dataset
+
+- **Pilar:** Proyecto 2 — Educación (analítica académica y prevención de la deserción).
 
 - *Predict Students' Dropout and Academic Success* — UCI ML Repository (ID 697).
 - 4.424 estudiantes · 36 variables (académicas, socioeconómicas, demográficas, macroeconómicas) · sin nulos ni duplicados.
@@ -46,13 +48,13 @@ Desbalance: `class_weight` como hiperparámetro (en todos los casos ganó la pon
 
 | Modelo (información completa) | Macro-F1 CV | Accuracy | Macro-F1 | Balanced acc. |
 |---|---|---|---|---|
-| Regresión Logística | 0,717 | 0,728 | 0,688 | 0,698 |
-| Random Forest | 0,726 | 0,767 | 0,716 | 0,716 |
-| **★ HistGradientBoosting (seleccionado)** | **0,728** | 0,746 | 0,705 | 0,715 |
+| **★ Gradient Boosting (HistGradientBoosting) (seleccionado)** | 0,730 | 0,729 | 0,688 | 0,697 |
+| Random Forest | 0,724 | 0,769 | 0,717 | 0,716 |
+| Regresión Logística | 0,717 | 0,724 | 0,684 | 0,695 |
 
-Recall del modelo seleccionado: Deserción 0,711 · Matriculado 0,623 · Graduado 0,812.
+Recall del modelo seleccionado: Deserción 0,697 · Matriculado 0,597 · Graduado 0,796.
 
-Alerta temprana (sin 2.º semestre, HistGradientBoosting): macro-F1 CV 0,698 · accuracy 0,720 · macro-F1 0,675 · balanced acc. 0,681.
+Alerta temprana (sin 2.º semestre, Gradient Boosting): macro-F1 CV 0,699 · accuracy 0,711 · macro-F1 0,669 · balanced acc. 0,677.
 
 ## Captura de Streamlit
 
@@ -60,10 +62,10 @@ Alerta temprana (sin 2.º semestre, HistGradientBoosting): macro-F1 CV 0,698 · 
 
 ## Conclusiones
 
-1. Los tres algoritmos alcanzan desempeños cercanos (macro-F1 CV 0,717–0,728); HistGradientBoosting fue seleccionado por validación cruzada, con diferencia menor a la variabilidad entre pliegues frente a Random Forest.
+1. Los tres algoritmos alcanzan desempeños cercanos (macro-F1 CV 0,717–0,730); Gradient Boosting fue seleccionado por validación cruzada, con diferencia menor a la variabilidad entre pliegues.
 2. Las unidades aprobadas por semestre y tener la matrícula al día son las variables de las que más depende el modelo.
-3. *Matriculado* es la clase más difícil (F1 0,52): su perfil es intermedio entre graduados y desertores.
-4. Con solo la información del 1.er semestre es posible una alerta temprana con macro-F1 de 0,675 en prueba, un semestre antes.
+3. *Matriculado* es la clase más difícil (F1 0,49): su perfil es intermedio entre graduados y desertores.
+4. Con solo la información del 1.er semestre es posible una alerta temprana con macro-F1 de 0,669 en prueba, un semestre antes.
 5. La herramienta es académica: identifica asociaciones, no causas, y no reemplaza decisiones institucionales.
 
 ## Referencias (APA 7)

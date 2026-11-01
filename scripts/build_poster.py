@@ -145,7 +145,7 @@ td.diag {{ background:#13315C; color:#fff; font-weight:700; }}
  <div class="card"><h3>Objetivo</h3><p>{html.escape(info.OBJETIVO)}</p></div>
 </div>
 
-<div class="card"><h3>Dataset — UCI 697 · Predict Students' Dropout and Academic Success</h3>
+<div class="card"><h3>Pilar: Educación · Dataset UCI 697 — Predict Students' Dropout and Academic Success</h3>
  <div class="kpis">
   <div class="kpi"><b>{meta['dataset']['filas']:,}</b><span>estudiantes</span></div>
   <div class="kpi"><b>36</b><span>variables predictoras</span></div>

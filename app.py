@@ -121,8 +121,8 @@ PLOT_CONFIG = {"displaylogo": False, "modeBarButtonsToRemove": ["lasso2d", "sele
 @st.cache_data(show_spinner=False)
 def get_data() -> pd.DataFrame:
     df = load_clean()
-    df["cu_1st_approval_rate"] = (df["cu_1st_approved"] / df["cu_1st_enrolled"].where(df["cu_1st_enrolled"] > 0)).fillna(0)
-    df["cu_2nd_approval_rate"] = (df["cu_2nd_approved"] / df["cu_2nd_enrolled"].where(df["cu_2nd_enrolled"] > 0)).fillna(0)
+    df["curricular_units_1st_sem_approval_rate"] = (df["curricular_units_1st_sem_approved"] / df["curricular_units_1st_sem_enrolled"].where(df["curricular_units_1st_sem_enrolled"] > 0)).fillna(0)
+    df["curricular_units_2nd_sem_approval_rate"] = (df["curricular_units_2nd_sem_approved"] / df["curricular_units_2nd_sem_enrolled"].where(df["curricular_units_2nd_sem_enrolled"] > 0)).fillna(0)
     return df
 
 
@@ -187,7 +187,7 @@ def page_dashboard() -> None:
     if sel_cursos:
         mask &= disp["course"].isin(sel_cursos)
     if sel_jornada != "Todas":
-        mask &= disp["daytime_attendance"] == sel_jornada
+        mask &= disp["daytime_evening_attendance"] == sel_jornada
     if sel_sexo != "Todos":
         mask &= disp["gender"] == sel_sexo
     if sel_beca != "Todos":
@@ -240,11 +240,11 @@ def page_dashboard() -> None:
 
     st.markdown('<div class="ep-section-title">Rendimiento académico según la situación final</div>', unsafe_allow_html=True)
     perf_vars = {
-        dd.label("cu_1st_grade"): "cu_1st_grade",
-        dd.label("cu_2nd_grade"): "cu_2nd_grade",
-        dd.label("cu_1st_approval_rate"): "cu_1st_approval_rate",
-        dd.label("cu_2nd_approval_rate"): "cu_2nd_approval_rate",
-        dd.label("cu_1st_approved"): "cu_1st_approved",
+        dd.label("curricular_units_1st_sem_grade"): "curricular_units_1st_sem_grade",
+        dd.label("curricular_units_2nd_sem_grade"): "curricular_units_2nd_sem_grade",
+        dd.label("curricular_units_1st_sem_approval_rate"): "curricular_units_1st_sem_approval_rate",
+        dd.label("curricular_units_2nd_sem_approval_rate"): "curricular_units_2nd_sem_approval_rate",
+        dd.label("curricular_units_1st_sem_approved"): "curricular_units_1st_sem_approved",
         dd.label("admission_grade"): "admission_grade",
         dd.label("age_at_enrollment"): "age_at_enrollment",
     }
@@ -261,8 +261,8 @@ def page_dashboard() -> None:
             fig.update_yaxes(tickformat=".0%")
         st.plotly_chart(style_fig(fig, 380, legend=False), width="stretch", config=PLOT_CONFIG)
     with col_d:
-        means = (r.groupby(dd.TARGET)[["cu_1st_grade", "cu_2nd_grade", "cu_1st_approval_rate",
-                                       "cu_2nd_approval_rate", "admission_grade", "age_at_enrollment"]]
+        means = (r.groupby(dd.TARGET)[["curricular_units_1st_sem_grade", "curricular_units_2nd_sem_grade", "curricular_units_1st_sem_approval_rate",
+                                       "curricular_units_2nd_sem_approval_rate", "admission_grade", "age_at_enrollment"]]
                  .mean().reindex(CLASS_ORDER).T)
         means.columns = ORDER_ES
         means.index = [dd.label(i) for i in means.index]
@@ -272,8 +272,8 @@ def page_dashboard() -> None:
     st.markdown('<div class="ep-section-title">Variables asociadas con la deserción</div>', unsafe_allow_html=True)
     st.caption("Tasa de deserción observada según cada condición. Muestra asociación descriptiva, no causalidad.")
     rows = []
-    for col in ["tuition_up_to_date", "debtor", "scholarship_holder", "displaced", "gender",
-                "daytime_attendance", "international", "special_needs"]:
+    for col in ["tuition_fees_up_to_date", "debtor", "scholarship_holder", "displaced", "gender",
+                "daytime_evening_attendance", "international", "educational_special_needs"]:
         for val in (1, 0):
             sub = r[r[col] == val]
             if len(sub):
@@ -373,8 +373,8 @@ def page_predict() -> None:
         with t_ing:
             a, b = st.columns(2)
             rec["course"] = _select(a, "course", meta, freqs["course"])
-            rec["daytime_attendance"] = b.selectbox(dd.label("daytime_attendance"), [1, 0],
-                                                    format_func=lambda v: dd.code_label("daytime_attendance", v),
+            rec["daytime_evening_attendance"] = b.selectbox(dd.label("daytime_evening_attendance"), [1, 0],
+                                                    format_func=lambda v: dd.code_label("daytime_evening_attendance", v),
                                                     key="in_daytime_attendance")
             rec["application_mode"] = _select(a, "application_mode", meta, freqs["application_mode"])
             rec["application_order"] = b.slider(dd.label("application_order"), 0, 9,
@@ -402,27 +402,27 @@ def page_predict() -> None:
             rec["international"] = a.selectbox(dd.label("international"), [0, 1], format_func=yn, key="in_international")
             rec["displaced"] = b.selectbox(dd.label("displaced"), [1, 0], format_func=yn, key="in_displaced",
                                            index=0 if meta["modas_entrenamiento"]["displaced"] == 1 else 1)
-            rec["special_needs"] = a.selectbox(dd.label("special_needs"), [0, 1], format_func=yn, key="in_special_needs")
+            rec["educational_special_needs"] = a.selectbox(dd.label("educational_special_needs"), [0, 1], format_func=yn, key="in_special_needs")
         with t_soc:
             a, b = st.columns(2)
             rec["scholarship_holder"] = a.selectbox(dd.label("scholarship_holder"), [0, 1], format_func=yn, key="in_scholarship_holder")
-            rec["tuition_up_to_date"] = b.selectbox(dd.label("tuition_up_to_date"), [1, 0], format_func=yn, key="in_tuition_up_to_date")
+            rec["tuition_fees_up_to_date"] = b.selectbox(dd.label("tuition_fees_up_to_date"), [1, 0], format_func=yn, key="in_tuition_up_to_date")
             rec["debtor"] = a.selectbox(dd.label("debtor"), [0, 1], format_func=yn, key="in_debtor")
-            rec["mother_qualification"] = _select(a, "mother_qualification", meta, freqs["mother_qualification"])
-            rec["father_qualification"] = _select(b, "father_qualification", meta, freqs["father_qualification"])
-            rec["mother_occupation"] = _select(a, "mother_occupation", meta, freqs["mother_occupation"])
-            rec["father_occupation"] = _select(b, "father_occupation", meta, freqs["father_occupation"])
+            rec["mothers_qualification"] = _select(a, "mothers_qualification", meta, freqs["mothers_qualification"])
+            rec["fathers_qualification"] = _select(b, "fathers_qualification", meta, freqs["fathers_qualification"])
+            rec["mothers_occupation"] = _select(a, "mothers_occupation", meta, freqs["mothers_occupation"])
+            rec["fathers_occupation"] = _select(b, "fathers_occupation", meta, freqs["fathers_occupation"])
 
         def semester_inputs(tab, sem: str):
             a, b, c = tab.columns(3)
             out = {
-                f"cu_{sem}_enrolled": _number(a, f"cu_{sem}_enrolled", meta),
-                f"cu_{sem}_approved": _number(b, f"cu_{sem}_approved", meta),
-                f"cu_{sem}_grade": _number(c, f"cu_{sem}_grade", meta, step=0.1, fmt="%.2f",
+                f"curricular_units_{sem}_sem_enrolled": _number(a, f"curricular_units_{sem}_sem_enrolled", meta),
+                f"curricular_units_{sem}_sem_approved": _number(b, f"curricular_units_{sem}_sem_approved", meta),
+                f"curricular_units_{sem}_sem_grade": _number(c, f"curricular_units_{sem}_sem_grade", meta, step=0.1, fmt="%.2f",
                                            help_txt="Promedio en escala 0–20. Use 0 si no aprobó ninguna unidad."),
-                f"cu_{sem}_evaluations": _number(a, f"cu_{sem}_evaluations", meta),
-                f"cu_{sem}_credited": _number(b, f"cu_{sem}_credited", meta),
-                f"cu_{sem}_without_eval": _number(c, f"cu_{sem}_without_eval", meta),
+                f"curricular_units_{sem}_sem_evaluations": _number(a, f"curricular_units_{sem}_sem_evaluations", meta),
+                f"curricular_units_{sem}_sem_credited": _number(b, f"curricular_units_{sem}_sem_credited", meta),
+                f"curricular_units_{sem}_sem_without_evaluations": _number(c, f"curricular_units_{sem}_sem_without_evaluations", meta),
             }
             return out
 
@@ -545,6 +545,13 @@ def render_comparison(modality: str) -> None:
         if diff < max(w["cv"]["f1_macro"]["desv"], second["cv"]["f1_macro"]["desv"]):
             st.caption("Nota: la diferencia con el segundo modelo es menor que la desviación entre pliegues; "
                        "ambos tienen un desempeño estadísticamente similar.")
+        best_test = max(models, key=lambda k: models[k]["prueba"]["f1_macro"])
+        if best_test != winner:
+            st.caption(
+                f"En el conjunto de prueba, {models[best_test]['nombre']} obtuvo un macro-F1 mayor "
+                f"({num(models[best_test]['prueba']['f1_macro'])} frente a {num(w['prueba']['f1_macro'])}). "
+                "No se cambia la elección: seleccionar con el conjunto de prueba sesgaría la evaluación final."
+            )
         st.markdown("**Hiperparámetros óptimos (GridSearchCV)**")
         st.json(w["mejores_hiperparametros"], expanded=True)
     with c2:
@@ -617,6 +624,7 @@ def page_compare() -> None:
 def page_about() -> None:
     hero("Acerca del proyecto", info.DESCRIPCION)
     st.markdown(f"**Contexto académico.** {info.CONTEXTO}")
+    st.markdown(f"**Pilar:** {info.PILAR} · **Docente:** {info.DOCENTE}")
     c1, c2 = st.columns(2)
     with c1:
         with st.container(border=True):

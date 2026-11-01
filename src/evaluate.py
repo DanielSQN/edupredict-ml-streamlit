@@ -68,16 +68,25 @@ def compute_metrics(y_true, y_pred, y_proba: np.ndarray | None = None,
 
 
 def summarize_cv(search, scoring_names: list[str]) -> dict:
-    """Extrae media y desviación estándar de CV para la mejor combinación."""
+    """Media y desviación de CV para la mejor combinación.
+
+    Incluye la media en los pliegues de entrenamiento (para medir la brecha de
+    sobreajuste train–validación, como en el notebook borrador) y los valores
+    de cada pliegue de validación (estabilidad).
+    """
     i = int(search.best_index_)
     res = search.cv_results_
-    return {
-        name: {
+    n_splits = sum(1 for k in res if k.startswith("split") and k.endswith(f"_test_{scoring_names[0]}"))
+    out = {}
+    for name in scoring_names:
+        out[name] = {
             "media": float(res[f"mean_test_{name}"][i]),
             "desv": float(res[f"std_test_{name}"][i]),
+            "pliegues": [float(res[f"split{k}_test_{name}"][i]) for k in range(n_splits)],
         }
-        for name in scoring_names
-    }
+        if f"mean_train_{name}" in res:
+            out[name]["media_train"] = float(res[f"mean_train_{name}"][i])
+    return out
 
 
 def permutation_importances(pipeline, X: pd.DataFrame, y, n_repeats: int = 10,

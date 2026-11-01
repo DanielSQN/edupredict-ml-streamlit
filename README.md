@@ -62,9 +62,10 @@ edupredict-ml-streamlit/
 │   ├── data.csv                   # CSV original UCI 697
 │   └── estudiantes_limpio.csv     # Resultado de src/data_loader.py
 ├── notebooks/
-│   └── ACA1_EDA_y_Modelado.ipynb  # EDA, limpieza y resultados (ejecutado)
+│   ├── ACA1_Borrador_Student_Dropout.ipynb   # Notebook del ACA refactorizado y ejecutado (Pasos 1–4)
+│   └── original/                             # Copia sin modificar del borrador entregado por el equipo
 ├── src/
-│   ├── data_dictionary.py         # Columnas, tipos, unidades, códigos → español
+│   ├── data_dictionary.py         # Columnas (nombres del borrador), tipos, unidades, códigos → español
 │   ├── data_loader.py             # Descarga, lectura, limpieza y validación de consistencia
 │   ├── preprocessing.py           # Conjuntos de variables, pipelines por modelo, validación de esquema
 │   ├── train.py                   # GridSearchCV + selección por CV + exportación de artefactos
@@ -79,8 +80,8 @@ edupredict-ml-streamlit/
 └── docs/
     ├── capturas/                  # Capturas reales de la aplicación
     ├── poster/                    # Contenido base y borrador del póster
-    ├── referencias/
-    └── video/
+    ├── referencias/               # Enunciado oficial del ACA (PDF) y correspondencia con los requisitos
+    └── video/                     # Guion de la sustentación
 ```
 
 Flujo: `data.csv → data_loader (limpieza determinista) → train (split 80/20 → GridSearchCV 5-fold → selección por CV → evaluación en prueba) → models/*.joblib + *.json → predict → app.py`.
@@ -89,67 +90,75 @@ Flujo: `data.csv → data_loader (limpieza determinista) → train (split 80/20 
 
 ## 6. Metodología
 
-1. **Análisis exploratorio** (notebook): tipos de variables, estadísticas descriptivas, nulos y duplicados, histogramas y boxplots, distribución de la variable objetivo, correlaciones de Spearman, outliers (IQR), reglas de consistencia y variables asociadas con la deserción.
-2. **Limpieza determinista** (`src/data_loader.py`): se eliminan el BOM y el tabulador de los nombres de columna, se renombran a `snake_case`, se validan tipos, rangos documentados (notas 0–20 y 0–200, etc.) y reglas lógicas (aprobadas ≤ inscritas). **No se eliminan valores extremos legítimos**: las edades altas corresponden a la vía de admisión «mayores de 23 años» y las notas 0 a semestres sin unidades aprobadas; eliminarlos sesgaría justo la clase Deserción.
+El trabajo parte del notebook borrador del equipo (`notebooks/original/`), que se refactorizó sin perder su estructura, explicaciones ni algoritmos: el código reutilizable se trasladó a `src/` y el notebook (`notebooks/ACA1_Borrador_Student_Dropout.ipynb`) lo importa, de modo que notebook, entrenamiento y aplicación usan exactamente los mismos criterios. Los nombres de columna son los del borrador (`normalizar_nombre`: p. ej. `curricular_units_2nd_sem_approved`).
+
+1. **Análisis exploratorio** (notebook, Parte 1): estructura, tipos, nulos (incluidos marcadores de texto), duplicados, estadística descriptiva con coeficiente de variación, asimetría, curtosis y prueba de normalidad, distribución del target, histogramas + KDE, boxplots, outliers por IQR, variables binarias y categóricas frente al target, correlaciones de Pearson, correlación con Dropout/Graduate y reglas de consistencia duras y blandas.
+2. **Limpieza determinista** (notebook, Parte 2 · `src/data_loader.py`): se eliminan el BOM y el tabulador de los nombres de columna, se renombran a `snake_case`, se validan tipos, rangos documentados (notas 0–20 y 0–200, etc.) y reglas lógicas. Las reglas duras eliminarían registros imposibles (hay 0); las blandas marcan 912 casos atípicos pero posibles, que se conservan. **No se eliminan ni recortan valores extremos legítimos**: las edades altas corresponden a la vía de admisión «mayores de 23 años» y las notas 0 a semestres sin unidades aprobadas. El notebook verifica que su limpieza produce exactamente el mismo dataset que el pipeline.
 3. **Partición** estratificada 80/20 con `random_state=42` (3.539 entrenamiento / 885 prueba).
-4. **Pipelines sin fuga de información**: tasa de aprobación por semestre (transformación sin estado) + `ColumnTransformer` específico por algoritmo, ajustado dentro de cada pliegue:
+4. **Pipelines sin fuga de información**: tasa de aprobación por semestre (transformación sin estado) → `WinsorizadorIQR` del borrador (opcional) → `ColumnTransformer` específico por algoritmo, ajustado dentro de cada pliegue:
 
    | Algoritmo | Nominales | Numéricas |
    |---|---|---|
-   | Regresión Logística | One-Hot (categorías con < 10 casos → «infrecuente») | `StandardScaler` |
+   | Regresión Logística | One-Hot (categorías con < 10 casos → «infrecuente») | `StandardScaler` (+ winsorización IQR si la CV la elige) |
    | Random Forest | One-Hot | sin escalar |
    | HistGradientBoosting | Ordinal + categóricas nativas | sin escalar |
 
    Las categorías no vistas en entrenamiento se envían al grupo infrecuente (One-Hot) o a valor faltante (HGB): la predicción no falla.
-5. **Desbalance de clases**: se incluye `class_weight` (sin ponderar vs. balanceado) en la rejilla de hiperparámetros y la validación cruzada decide. En los 6 casos (3 algoritmos × 2 modalidades) ganó la ponderación balanceada, lo que mejora el recall de la clase minoritaria *Matriculado*.
+5. **Desbalance de clases**: el borrador usaba `class_weight="balanced"` (sin datos sintéticos); aquí se incluye `class_weight` (sin ponderar vs. balanceado) en la rejilla y la validación cruzada decide.
 6. **Ajuste y selección**: `GridSearchCV` con `StratifiedKFold(n_splits=5, shuffle=True, random_state=42)`, optimizando **macro-F1**. El ganador se elige por macro-F1 medio de validación cruzada; **el conjunto de prueba no interviene en la selección** y solo se usa para la evaluación final de los tres modelos.
-7. **Alerta temprana**: se repite el protocolo completo con un segundo conjunto de columnas que **excluye las 6 variables del 2.º semestre**, generando su propio artefacto, metadatos y métricas.
+7. **Alerta temprana** (experimento 4.9 del borrador): se repite el protocolo completo, con su propia búsqueda de hiperparámetros, sobre un conjunto de columnas que **excluye las 6 variables del 2.º semestre**, generando su propio artefacto, metadatos y métricas.
 
 ## 7. Modelos
 
 | Algoritmo | Rejilla evaluada |
 |---|---|
-| Regresión Logística (multinomial, lbfgs) | `C` ∈ {0,01; 0,1; 1; 10} × `class_weight` ∈ {None, balanced} |
-| Random Forest (400 árboles) | `max_depth` ∈ {None, 15} × `min_samples_leaf` ∈ {1, 3} × `max_features` ∈ {sqrt, 0,3} × `class_weight` ∈ {None, balanced_subsample} |
-| HistGradientBoostingClassifier (early stopping) | `learning_rate` ∈ {0,05; 0,1} × `max_leaf_nodes` ∈ {15, 31} × `l2_regularization` ∈ {0, 1} × `class_weight` ∈ {None, balanced} |
+| Regresión Logística (multinomial, lbfgs) | `C` ∈ {0,01; 0,03; 0,1; 0,3; 1; 3} × `class_weight` ∈ {None, balanced} × `winsor` ∈ {passthrough, WinsorizadorIQR} |
+| Random Forest (300 árboles) | `max_depth` ∈ {8, 12, None} × `min_samples_leaf` ∈ {1, 3, 5} × `max_features` ∈ {sqrt, 0,5} × `class_weight` ∈ {None, balanced_subsample} |
+| HistGradientBoostingClassifier (categorías nativas) | `learning_rate` ∈ {0,03; 0,1} × `max_depth` ∈ {3, 6} × `min_samples_leaf` ∈ {20, 40} × `max_iter` ∈ {150, 300} × `class_weight` ∈ {None, balanced} |
+
+Las rejillas son las del notebook borrador, ampliadas con `class_weight` y, en la Logística, con la winsorización.
 
 ## 8. Métricas reales
 
-Valores generados por `python -m src.train` (archivos `models/metricas.json` y `models/metricas_temprano.json`). CV = media ± desviación en 5 pliegues sobre entrenamiento; Prueba = 885 estudiantes nunca vistos.
+Valores generados por `python -m src.train` (archivos `models/metricas.json` y `models/metricas_temprano.json`), idénticos a los de la ejecución del notebook. CV = media ± desviación en 5 pliegues sobre entrenamiento; brecha = macro-F1 en entrenamiento − macro-F1 en validación (sobreajuste); prueba = 885 estudiantes nunca vistos. Filas ordenadas por macro-F1 en CV (criterio de selección).
 
 ### 8.1 Modelo con información completa (36 variables)
 
-| Algoritmo | Macro-F1 (CV) | Accuracy (prueba) | Macro-F1 (prueba) | Balanced acc. (prueba) | Recall Deserción | Recall Matriculado | Recall Graduado | ROC-AUC OvR |
-|---|---|---|---|---|---|---|---|---|
-| Regresión Logística | 0,7169 ± 0,0143 | 0,7277 | 0,6877 | 0,6981 | 0,690 | 0,610 | 0,794 | 0,8849 |
-| Random Forest | 0,7255 ± 0,0170 | 0,7672 | 0,7164 | 0,7157 | 0,729 | 0,547 | 0,871 | 0,8899 |
-| **★ HistGradientBoosting** | **0,7282 ± 0,0158** | 0,7458 | 0,7054 | 0,7154 | 0,711 | 0,623 | 0,812 | 0,8803 |
+| Algoritmo | Macro-F1 (CV) | Brecha train–val | Accuracy (prueba) | Macro-F1 (prueba) | Balanced acc. (prueba) | Recall Deserción | Recall Matriculado | Recall Graduado | ROC-AUC OvR |
+|---|---|---|---|---|---|---|---|---|---|
+| **★ HistGradientBoosting** | **0,7303 ± 0,0085** | 0,13 | 0,7288 | 0,6879 | 0,6970 | 0,697 | 0,597 | 0,796 | 0,8811 |
+| Random Forest | 0,7244 ± 0,0169 | 0,19 | 0,7695 | 0,7171 | 0,7159 | 0,729 | 0,541 | 0,878 | 0,8904 |
+| Regresión Logística | 0,7174 ± 0,0174 | 0,04 | 0,7243 | 0,6839 | 0,6945 | 0,690 | 0,604 | 0,790 | 0,8827 |
 
-**Modelo seleccionado: HistGradientBoostingClassifier** (`class_weight=balanced`, `learning_rate=0,05`, `max_leaf_nodes=15`, `l2_regularization=1`), por tener el mayor macro-F1 en validación cruzada.
+**Modelo seleccionado: Gradient Boosting (HistGradientBoosting)** (`class_weight=balanced`, `learning_rate=0.03`, `max_depth=3`, `max_iter=300`, `min_samples_leaf=20`), por tener el mayor macro-F1 en validación cruzada y la menor desviación entre pliegues.
+
+Decisiones validadas por la búsqueda de hiperparámetros: en los 6 modelos (3 algoritmos × 2 modalidades) se eligió la **ponderación balanceada de clases**; en la Regresión Logística se eligió `winsor=passthrough` (no recortar valores extremos).
 
 Precisión / recall / F1 por clase en prueba del modelo seleccionado:
 
 | Clase | Precisión | Recall | F1 | Soporte |
 |---|---|---|---|---|
-| Deserción | 0,815 | 0,711 | 0,759 | 284 |
-| Matriculado | 0,442 | 0,623 | 0,517 | 159 |
-| Graduado | 0,869 | 0,812 | 0,840 | 442 |
+| Deserción | 0,808 | 0,697 | 0,749 | 284 |
+| Matriculado | 0,415 | 0,597 | 0,490 | 159 |
+| Graduado | 0,856 | 0,796 | 0,825 | 442 |
 
-Matriz de confusión (filas = real, columnas = predicho; orden Deserción, Matriculado, Graduado): `[[202, 57, 25], [31, 99, 29], [15, 68, 359]]`.
+Matriz de confusión (filas = real, columnas = predicho; orden Deserción, Matriculado, Graduado): `[[198, 59, 27], [32, 95, 32], [15, 75, 352]]`.
 
-> **Nota de interpretación.** En prueba, Random Forest obtuvo un macro-F1 ligeramente superior (0,7164 vs. 0,7054). No se cambió la elección: hacerlo sería seleccionar con el conjunto de prueba. Las diferencias en CV entre HGB y RF (0,003) son menores que la desviación entre pliegues, por lo que ambos modelos deben considerarse de desempeño similar. HGB ofrece además el mejor recall de la clase minoritaria *Matriculado*.
+> **Nota de interpretación.** En prueba, Random Forest obtuvo un macro-F1 superior (0,7171 vs. 0,6879). No se cambió la elección: hacerlo sería seleccionar con el conjunto de prueba. La diferencia en CV entre Gradient Boosting y Random Forest (0,006) es menor que la desviación entre pliegues, por lo que ambos deben considerarse de desempeño similar. Random Forest es una alternativa razonable si se prioriza el desempeño observado en prueba, pero esa preferencia no puede justificarse con el mismo conjunto que se usa para evaluar.
 
-Variables de las que más depende el modelo (importancia por permutación en prueba, caída de macro-F1): unidades aprobadas del 2.º semestre (0,212), unidades aprobadas del 1.er semestre (0,067), matrícula al día (0,054), unidades inscritas del 2.º semestre (0,046) y programa académico (0,028).
+Variables de las que más depende el modelo (importancia por permutación en prueba, caída de macro-F1): 2.º sem.: unidades aprobadas (0,183), 1.er sem.: unidades aprobadas (0,051), matrícula al día (0,048), 2.º sem.: unidades inscritas (0,042), 1.er sem.: unidades inscritas (0,013).
+
+**Comparación con el borrador.** Ejecutado tal como fue entregado, el notebook borrador obtiene para Gradient Boosting macro-F1 CV 0,728 ± 0,011 y macro-F1 en prueba 0,704 (Regresión Logística 0,697; Random Forest 0,695), cifras que coinciden con las de su Parte 5. Las diferencias con esta versión se deben a las correcciones de la sección 14 (selección por CV, categóricas nativas/one-hot, rejilla ampliada). En ambas versiones el modelo con mejor macro-F1 en CV es Gradient Boosting.
 
 ### 8.2 Modelo de alerta temprana (cierre del 1.er semestre, 30 variables)
 
-| Algoritmo | Macro-F1 (CV) | Accuracy (prueba) | Macro-F1 (prueba) | Balanced acc. (prueba) | Recall Deserción | Recall Matriculado | Recall Graduado |
-|---|---|---|---|---|---|---|---|
-| Regresión Logística | 0,6844 ± 0,0167 | 0,7096 | 0,6715 | 0,6813 | 0,673 | 0,597 | 0,774 |
-| Random Forest | 0,6932 ± 0,0230 | 0,7333 | 0,6777 | 0,6786 | 0,697 | 0,497 | 0,842 |
-| **★ HistGradientBoosting** | **0,6976 ± 0,0117** | 0,7198 | 0,6747 | 0,6810 | 0,715 | 0,541 | 0,787 |
+| Algoritmo | Macro-F1 (CV) | Brecha train–val | Accuracy (prueba) | Macro-F1 (prueba) | Balanced acc. (prueba) | Recall Deserción | Recall Matriculado | Recall Graduado | ROC-AUC OvR |
+|---|---|---|---|---|---|---|---|---|---|
+| **★ HistGradientBoosting** | **0,6995 ± 0,0180** | 0,14 | 0,7107 | 0,6688 | 0,6767 | 0,662 | 0,579 | 0,790 | 0,8618 |
+| Random Forest | 0,6943 ± 0,0238 | 0,14 | 0,7367 | 0,6846 | 0,6875 | 0,697 | 0,528 | 0,837 | 0,8695 |
+| Regresión Logística | 0,6877 ± 0,0165 | 0,03 | 0,7040 | 0,6658 | 0,6757 | 0,669 | 0,591 | 0,767 | 0,8622 |
 
-Este modelo responde a otra pregunta (anticipar con información limitada) y no debe compararse directamente con el modelo completo.
+**Modelo seleccionado: Gradient Boosting (HistGradientBoosting)** (`class_weight=balanced`, `learning_rate=0.03`, `max_depth=3`, `max_iter=300`, `min_samples_leaf=20`). Este modelo responde a otra pregunta (anticipar con información limitada) y no debe compararse directamente con el modelo completo.
 
 ## 9. Instalación
 
@@ -214,14 +223,31 @@ Abrir `docs/poster/poster.html` en Chrome/Edge → *Imprimir → Guardar como PD
 
 ## 14. Correcciones y decisiones metodológicas
 
-- **Nombres de columna**: el CSV de UCI trae BOM y un tabulador en `Daytime/evening attendance\t`; se normalizan antes de cualquier uso.
-- **Variables nominales codificadas como enteros** (programa, ocupaciones, etc.): se tratan como categorías (One-Hot / categóricas nativas), nunca como magnitudes.
-- **Sin fuga de información**: escalado y codificación viven dentro del pipeline y se ajustan por pliegue.
-- **Selección sin el conjunto de prueba**: el ganador se elige por CV; la prueba se usa una sola vez.
-- **Desbalance**: tratado como hiperparámetro y evaluado con macro-F1 y balanced accuracy, no solo accuracy.
-- **Outliers**: se conservan los valores extremos legítimos (justificación en la sección 6 y en el notebook).
-- **Alerta temprana**: modelo independiente sin variables del 2.º semestre, con artefacto y métricas propios; la prueba `test_early_model_does_not_use_second_semester` lo verifica.
-- **Coherencia notebook–pipeline–interfaz**: el notebook y la app importan los mismos módulos de `src/`; las pruebas verifican que `estudiantes_limpio.csv` sea idéntico a la salida de la limpieza y que la predicción desde la interfaz coincida con el pipeline directo.
+### 14.1 Respecto al notebook borrador
+
+El borrador original se conserva sin cambios en `notebooks/original/`. Se ejecutó tal como fue entregado y sus cifras reproducen las que reporta su Parte 5; la revisión encontró estos puntos, corregidos en la versión refactorizada (marcados con 🔧 en el notebook):
+
+| Borrador | Corrección | Motivo |
+|---|---|---|
+| El mejor modelo se elegía por macro-F1 en el **test** (sección 4.10) | Selección por **macro-F1 medio de validación cruzada**; el test solo evalúa | Elegir con el test lo convierte en validación y sesga la estimación final |
+| Winsorización IQR fija de notas de ingreso/previa y edad | Opción de la rejilla de la Regresión Logística, decidida por CV (resultado: no winsorizar) | Recortaba a 34 años a 441 estudiantes (10 %), con 53,7 % de deserción frente a 29,7 % del resto: información legítima |
+| Gradient Boosting y Random Forest con `OrdinalEncoder` sobre códigos nominales | HistGradientBoosting con categorías nativas; Random Forest con One-Hot | Códigos como `course = 9500` no son magnitudes |
+| `application_order` categórica | Numérica ordinal | Es un ranking de preferencia (0 = primera opción) |
+| `class_weight="balanced"` fijo | Hiperparámetro validado por CV | Justificación empírica del tratamiento del desbalance |
+| Alerta temprana con los hiperparámetros del modelo completo | Modelo independiente con su propia búsqueda, artefacto y métricas | Los hiperparámetros óptimos dependen de las variables disponibles |
+| Imputación antes de la partición | Documentado (0 nulos ⇒ sin efecto); en datos futuros debe ir dentro del pipeline | Evitar fuga de información |
+| Exportaba `train.csv`, `test.csv`, metadatos sueltos y descargas de Colab | Un solo CSV limpio y artefactos en `models/` | Una sola fuente de verdad, reproducible con la semilla |
+| Cifras de conclusiones escritas a mano | Calculadas en la ejecución | Trazabilidad |
+
+Se conservaron: la estructura de 5 partes, las explicaciones, el EDA completo (estadística descriptiva con CV, asimetría, curtosis y normalidad; outliers IQR; reglas duras/blandas; correlaciones), los tres algoritmos y sus rejillas, la CV base vs. ajustada, el análisis de sobreajuste, los coeficientes de la Logística, la importancia por permutación y el experimento de alerta temprana.
+
+### 14.2 Decisiones generales
+
+- **Nombres de columna**: el CSV de UCI trae BOM y un tabulador en `Daytime/evening attendance\t`; se normalizan con la función `normalizar_nombre` del borrador antes de cualquier uso.
+- **Sin fuga de información**: escalado, codificación y winsorización viven dentro del pipeline y se ajustan por pliegue.
+- **Outliers**: se conservan los valores extremos legítimos.
+- **Coherencia notebook–pipeline–interfaz**: el notebook y la app importan los mismos módulos de `src/`; el notebook verifica que su limpieza coincide con la del pipeline y las pruebas verifican que la predicción desde la interfaz coincide con el pipeline directo.
+- **Alerta temprana**: la prueba `test_early_model_does_not_use_second_semester` verifica que el modelo no use variables del 2.º semestre.
 
 ## 15. Limitaciones
 

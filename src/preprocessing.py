@@ -58,7 +58,7 @@ class FeatureSet:
 
     @property
     def engineered(self) -> list[str]:
-        return [f"cu_{s}_approval_rate" for s in self.semesters]
+        return [f"curricular_units_{s}_sem_approval_rate" for s in self.semesters]
 
     @property
     def numeric_with_engineered(self) -> list[str]:
@@ -113,14 +113,49 @@ class AcademicFeatureEngineer(BaseEstimator, TransformerMixin):
     def transform(self, X):  # noqa: N803
         X = X.copy()
         for s in self.semesters:
-            enr = X[f"cu_{s}_enrolled"].astype(float)
-            app = X[f"cu_{s}_approved"].astype(float)
-            X[f"cu_{s}_approval_rate"] = np.where(enr > 0, app / enr.replace(0, np.nan), 0.0)
+            enr = X[f"curricular_units_{s}_sem_enrolled"].astype(float)
+            app = X[f"curricular_units_{s}_sem_approved"].astype(float)
+            X[f"curricular_units_{s}_sem_approval_rate"] = np.where(enr > 0, app / enr.replace(0, np.nan), 0.0)
         return X
 
     def get_feature_names_out(self, input_features=None):
         base = list(self.feature_names_in_ if input_features is None else input_features)
-        return np.asarray(base + [f"cu_{s}_approval_rate" for s in self.semesters], dtype=object)
+        return np.asarray(base + [f"curricular_units_{s}_sem_approval_rate" for s in self.semesters], dtype=object)
+
+
+class WinsorizadorIQR(BaseEstimator, TransformerMixin):
+    """Recorta valores fuera de [Q1 - k·IQR, Q3 + k·IQR] (tomado del notebook borrador).
+
+    Los límites se aprenden en ``fit`` (solo con datos de entrenamiento), por lo
+    que puede vivir dentro del pipeline sin fuga de información. En EduPredict
+    no se aplica de forma fija: es una **opción** de la rejilla de la regresión
+    logística (``winsor ∈ {passthrough, WinsorizadorIQR}``) y la validación
+    cruzada decide si aporta. Recortar la edad afecta a ~10 % de los
+    estudiantes (todos los mayores de ~34 años), que son casos legítimos.
+    """
+
+    def __init__(self, columnas=("previous_qualification_grade", "admission_grade", "age_at_enrollment"),
+                 k: float = 1.5):
+        self.columnas = columnas
+        self.k = k
+
+    def fit(self, X, y=None):  # noqa: N803
+        self.limites_ = {}
+        for c in self.columnas:
+            q1, q3 = X[c].quantile([0.25, 0.75])
+            iqr = q3 - q1
+            self.limites_[c] = (float(q1 - self.k * iqr), float(q3 + self.k * iqr))
+        self.feature_names_in_ = np.asarray(list(X.columns), dtype=object)
+        return self
+
+    def transform(self, X):  # noqa: N803
+        X = X.copy()
+        for c, (lo, hi) in self.limites_.items():
+            X[c] = X[c].clip(lo, hi)
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray(self.feature_names_in_ if input_features is None else input_features, dtype=object)
 
 
 # ---------------------------------------------------------------------------
@@ -214,9 +249,9 @@ def validate_input(df: pd.DataFrame, fs: FeatureSet) -> tuple[pd.DataFrame, list
         if ((out[c] < lo) | (out[c] > hi)).any():
             raise SchemaError(f"'{dd.label(c)}' fuera de rango [{lo}, {hi}]")
     for s in fs.semesters:
-        if (out[f"cu_{s}_approved"] > out[f"cu_{s}_enrolled"]).any():
+        if (out[f"curricular_units_{s}_sem_approved"] > out[f"curricular_units_{s}_sem_enrolled"]).any():
             raise SchemaError(
-                f"{dd.label(f'cu_{s}_approved')} no puede superar {dd.label(f'cu_{s}_enrolled')}"
+                f"{dd.label(f'curricular_units_{s}_sem_approved')} no puede superar {dd.label(f'curricular_units_{s}_sem_enrolled')}"
             )
     for c in fs.nominal:
         known = dd.CATEGORY_CODES[c]

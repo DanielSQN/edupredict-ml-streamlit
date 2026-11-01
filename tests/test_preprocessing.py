@@ -7,9 +7,10 @@ import pytest
 from src import data_dictionary as dd
 from src.data_loader import (
     RAW_PATH, DataValidationError, clean_column_names, clean_dataset, consistency_report, load_clean, load_raw,
+    normalizar_nombre, soft_rule_flags,
 )
 from src.preprocessing import (
-    EARLY, FULL, AcademicFeatureEngineer, SchemaError, build_preprocessor, validate_input,
+    EARLY, FULL, AcademicFeatureEngineer, SchemaError, WinsorizadorIQR, build_preprocessor, validate_input,
 )
 
 
@@ -66,15 +67,15 @@ def test_strict_validation_rejects_bad_data(raw):
 
 def test_feature_sets():
     assert len(FULL.raw_columns) == 36
-    assert not any(c.startswith("cu_2nd") for c in EARLY.raw_columns)
+    assert not any(c.startswith("curricular_units_2nd") for c in EARLY.raw_columns)
     assert len(EARLY.raw_columns) == 30
-    assert EARLY.engineered == ["cu_1st_approval_rate"]
+    assert EARLY.engineered == ["curricular_units_1st_sem_approval_rate"]
 
 
 def test_feature_engineer_handles_zero_enrolled():
-    X = pd.DataFrame({"cu_1st_enrolled": [0, 4], "cu_1st_approved": [0, 3]})
+    X = pd.DataFrame({"curricular_units_1st_sem_enrolled": [0, 4], "curricular_units_1st_sem_approved": [0, 3]})
     out = AcademicFeatureEngineer(semesters=("1st",)).fit_transform(X)
-    assert out["cu_1st_approval_rate"].tolist() == [0.0, 0.75]
+    assert out["curricular_units_1st_sem_approval_rate"].tolist() == [0.0, 0.75]
 
 
 @pytest.mark.parametrize("kind", ["logreg", "rf", "hgb"])
@@ -84,7 +85,7 @@ def test_preprocessor_unseen_categories(clean, kind):
     prep = build_preprocessor(kind, FULL).fit(eng.transform(X))
     new = X.head(3).copy()
     new["course"] = 99999
-    new["father_occupation"] = 777
+    new["fathers_occupation"] = 777
     Z = prep.transform(eng.transform(new))
     assert Z.shape[0] == 3
     if kind != "hgb":
@@ -108,11 +109,11 @@ def test_validate_input_ok_and_errors(clean):
     with pytest.raises(SchemaError):
         validate_input(row.drop(columns=["course"]), FULL)
     with pytest.raises(SchemaError):
-        validate_input(row.assign(cu_1st_grade=25.0), FULL)
+        validate_input(row.assign(curricular_units_1st_sem_grade=25.0), FULL)
     with pytest.raises(SchemaError):
         validate_input(row.assign(debtor=2), FULL)
     with pytest.raises(SchemaError):
-        validate_input(row.assign(cu_1st_enrolled=2, cu_1st_approved=5), FULL)
+        validate_input(row.assign(curricular_units_1st_sem_enrolled=2, curricular_units_1st_sem_approved=5), FULL)
     with pytest.raises(SchemaError):
         validate_input(row.assign(admission_grade="alto"), FULL)
     _, warns = validate_input(row.assign(course=12345), FULL)
@@ -123,3 +124,24 @@ def test_every_observed_code_is_documented(clean):
     for col in dd.NOMINAL_FEATURES:
         undocumented = set(clean[col]) - set(dd.CATEGORY_CODES[col])
         assert not undocumented, f"{col}: {undocumented}"
+
+
+def test_column_names_match_draft_notebook_normalizer(raw):
+    """El esquema del pipeline es el mismo que produce `normalizar_nombre` del notebook borrador."""
+    assert [normalizar_nombre(c) for c in raw.columns] == list(dd.COLUMN_MAP.values())
+
+
+def test_soft_rules_are_flagged_not_removed(clean):
+    flags = soft_rule_flags(clean)
+    assert int(flags.sum()) == 912          # mismo conteo que reporta el EDA del borrador
+    assert len(clean) == 4424               # ninguna fila se elimina
+
+
+def test_winsorizer_learns_limits_only_from_fit_data(clean):
+    X = clean[FULL.raw_columns]
+    w = WinsorizadorIQR().fit(X.iloc[:1000])
+    q1, q3 = X["age_at_enrollment"].iloc[:1000].quantile([0.25, 0.75])
+    assert w.limites_["age_at_enrollment"][1] == pytest.approx(q3 + 1.5 * (q3 - q1))
+    out = w.transform(X)
+    assert out["age_at_enrollment"].max() <= w.limites_["age_at_enrollment"][1]
+    assert X["age_at_enrollment"].max() == 70   # el original no se modifica

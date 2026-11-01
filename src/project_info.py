@@ -11,9 +11,13 @@ DESCRIPCION = (
 )
 
 CONTEXTO = (
-    "Proyecto ACA N.º 1 de la asignatura Aprendizaje Automático, Especialización en "
-    "Inteligencia Artificial, Corporación Unificada Nacional de Educación Superior (CUN)."
+    "Proyecto ACA N.º 1 de la asignatura Aprendizaje Automático — Modelado con algoritmos "
+    "clásicos de Machine Learning y despliegue interactivo en Streamlit. Especialización en "
+    "Inteligencia Artificial, Escuela de Ingeniería, Corporación Unificada Nacional de "
+    "Educación Superior (CUN)."
 )
+
+PILAR = "Proyecto 2 — Educación: analítica académica y prevención de la deserción"
 
 PREGUNTA = (
     "¿Cómo transformar datos educativos en conocimiento predictivo para anticipar la "
@@ -29,11 +33,20 @@ OBJETIVO = (
 
 # Completar con los nombres completos de los integrantes, p. ej. ["Nombre Apellido", ...]
 INTEGRANTES: list[str] = []
-DOCENTE: str = ""
+DOCENTE: str = "Dr. Hamilton Rivera Flor"
 
 ENLACE_APP: str = ""     # URL pública en Streamlit Community Cloud
 ENLACE_VIDEO: str = ""   # URL pública del video de sustentación
 ENLACE_REPO: str = "https://github.com/DanielSQN/edupredict-ml-streamlit"
+
+# Ruta de aprendizaje del ACA (enunciado oficial) y su implementación en este proyecto
+RUTA_ACA = [
+    ("Paso 1 · Exploración y EDA", "Notebook, Parte 1"),
+    ("Paso 2 · Limpieza y datos", "Notebook, Parte 2 · src/data_loader.py"),
+    ("Paso 3 · Modelado clásico", "Notebook, Partes 3–4 · src/train.py"),
+    ("Paso 4 · Evaluación y métricas", "Notebook, Parte 4 · src/evaluate.py"),
+    ("Paso 5 · Despliegue Streamlit", "app.py"),
+]
 
 METODOLOGIA = [
     ("Comprensión de los datos", "Exploración del dataset UCI 697: tipos de variables, estadísticas, distribución de clases, correlaciones y valores extremos."),

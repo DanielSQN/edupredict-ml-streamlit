@@ -43,7 +43,7 @@ td.diag { background:#13315C; color:#fff; font-weight:700; }
 <h1>EduPredict AI</h1>
 <h2>Predicción de deserción universitaria con Machine Learning clásico</h2>
 <p><b>[Nombres completos de los integrantes]</b></p>
-<p>Docente: [Docente] · Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN</p>
+<p>Docente: Dr. Hamilton Rivera Flor · Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN</p>
 </div></header>
 
 <div class="grid">
@@ -53,7 +53,7 @@ td.diag { background:#13315C; color:#fff; font-weight:700; }
  <div class="card"><h3>Objetivo</h3><p>Desarrollar una solución de Machine Learning clásico que permita analizar información académica, entrenar y comparar modelos de clasificación, evaluar su desempeño y presentar predicciones mediante una aplicación interactiva de Streamlit.</p></div>
 </div>
 
-<div class="card"><h3>Dataset — UCI 697 · Predict Students' Dropout and Academic Success</h3>
+<div class="card"><h3>Pilar: Educación · Dataset UCI 697 — Predict Students' Dropout and Academic Success</h3>
  <div class="kpis">
   <div class="kpi"><b>4.424</b><span>estudiantes</span></div>
   <div class="kpi"><b>36</b><span>variables predictoras</span></div>
@@ -68,15 +68,15 @@ td.diag { background:#13315C; color:#fff; font-weight:700; }
 
 <div class="grid">
  <div class="card"><h3>Comparación de modelos (prueba, n = 885)</h3>
-  <table><tr><th>Modelo</th><th>Macro-F1 CV</th><th>Accuracy</th><th>Macro-F1</th><th>Bal. acc.</th></tr><tr><td>Regresión Logística</td><td>0,717</td><td>0,728</td><td>0,688</td><td>0,698</td></tr><tr><td>Random Forest</td><td>0,726</td><td>0,767</td><td>0,716</td><td>0,716</td></tr><tr class="win"><td>★ Gradient Boosting (HistGradientBoosting)</td><td>0,728</td><td>0,746</td><td>0,705</td><td>0,715</td></tr></table>
+  <table><tr><th>Modelo</th><th>Macro-F1 CV</th><th>Accuracy</th><th>Macro-F1</th><th>Bal. acc.</th></tr><tr><td>Regresión Logística</td><td>0,717</td><td>0,724</td><td>0,684</td><td>0,695</td></tr><tr><td>Random Forest</td><td>0,724</td><td>0,769</td><td>0,717</td><td>0,716</td></tr><tr class="win"><td>★ Gradient Boosting (HistGradientBoosting)</td><td>0,730</td><td>0,729</td><td>0,688</td><td>0,697</td></tr></table>
   <p class="note">Selección por macro-F1 medio en validación cruzada de 5 pliegues; el conjunto de prueba no interviene en la selección.</p>
-  <table><tr><th>Clase (Gradient Boosting)</th><th>Precisión</th><th>Recall</th><th>F1</th></tr><tr><td><span class='dot' style='background:#D62F4B'></span>Deserción</td><td>0,815</td><td>0,711</td><td>0,759</td></tr><tr><td><span class='dot' style='background:#D99000'></span>Matriculado</td><td>0,442</td><td>0,623</td><td>0,517</td></tr><tr><td><span class='dot' style='background:#2A78D6'></span>Graduado</td><td>0,869</td><td>0,812</td><td>0,840</td></tr></table>
+  <table><tr><th>Clase (Gradient Boosting)</th><th>Precisión</th><th>Recall</th><th>F1</th></tr><tr><td><span class='dot' style='background:#D62F4B'></span>Deserción</td><td>0,808</td><td>0,697</td><td>0,749</td></tr><tr><td><span class='dot' style='background:#D99000'></span>Matriculado</td><td>0,415</td><td>0,597</td><td>0,490</td></tr><tr><td><span class='dot' style='background:#2A78D6'></span>Graduado</td><td>0,856</td><td>0,796</td><td>0,825</td></tr></table>
  </div>
  <div class="card"><h3>Matriz de confusión e importancia</h3>
-  <table><tr><th>Real \ Pred.</th><th>Deserción</th><th>Matriculado</th><th>Graduado</th></tr><tr><th>Deserción</th><td class='diag'>202</td><td class=''>57</td><td class=''>25</td></tr><tr><th>Matriculado</th><td class=''>31</td><td class='diag'>99</td><td class=''>29</td></tr><tr><th>Graduado</th><td class=''>15</td><td class=''>68</td><td class='diag'>359</td></tr></table><br><div class='imp'><span>2.º sem.: unidades aprobadas</span><div class='bar' style='width:100%'></div><b>0,212</b></div><div class='imp'><span>1.er sem.: unidades aprobadas</span><div class='bar' style='width:31%'></div><b>0,067</b></div><div class='imp'><span>Matrícula al día</span><div class='bar' style='width:26%'></div><b>0,054</b></div><div class='imp'><span>2.º sem.: unidades inscritas</span><div class='bar' style='width:22%'></div><b>0,046</b></div><div class='imp'><span>Programa académico</span><div class='bar' style='width:13%'></div><b>0,028</b></div><div class='imp'><span>1.er sem.: unidades inscritas</span><div class='bar' style='width:9%'></div><b>0,018</b></div>
+  <table><tr><th>Real \ Pred.</th><th>Deserción</th><th>Matriculado</th><th>Graduado</th></tr><tr><th>Deserción</th><td class='diag'>198</td><td class=''>59</td><td class=''>27</td></tr><tr><th>Matriculado</th><td class=''>32</td><td class='diag'>95</td><td class=''>32</td></tr><tr><th>Graduado</th><td class=''>15</td><td class=''>75</td><td class='diag'>352</td></tr></table><br><div class='imp'><span>2.º sem.: unidades aprobadas</span><div class='bar' style='width:100%'></div><b>0,183</b></div><div class='imp'><span>1.er sem.: unidades aprobadas</span><div class='bar' style='width:28%'></div><b>0,051</b></div><div class='imp'><span>Matrícula al día</span><div class='bar' style='width:26%'></div><b>0,048</b></div><div class='imp'><span>2.º sem.: unidades inscritas</span><div class='bar' style='width:23%'></div><b>0,042</b></div><div class='imp'><span>1.er sem.: unidades inscritas</span><div class='bar' style='width:7%'></div><b>0,013</b></div><div class='imp'><span>Programa académico</span><div class='bar' style='width:7%'></div><b>0,012</b></div>
   <p class="note">Importancia por permutación: caída de macro-F1 al permutar cada variable (asociación, no causalidad).</p>
-  <p><b>Alerta temprana</b> (Gradient Boosting): macro-F1 CV 0,698 ·
-  macro-F1 prueba 0,675 · accuracy 0,720.</p>
+  <p><b>Alerta temprana</b> (Gradient Boosting): macro-F1 CV 0,699 ·
+  macro-F1 prueba 0,669 · accuracy 0,711.</p>
  </div>
 </div>
 
@@ -85,7 +85,7 @@ td.diag { background:#13315C; color:#fff; font-weight:700; }
  <div class="card"><h3>Conclusiones</h3><ul>
   <li>Los tres algoritmos obtienen desempeños cercanos; Gradient Boosting fue seleccionado por validación cruzada.</li>
   <li>Las unidades aprobadas por semestre y la matrícula al día son las variables de las que más depende el modelo.</li>
-  <li><i>Matriculado</i> es la clase más difícil (F1 0,517).</li>
+  <li><i>Matriculado</i> es la clase más difícil (F1 0,490).</li>
   <li>Con información del 1.er semestre ya es posible una alerta temprana útil, un semestre antes.</li>
   <li>Herramienta académica: identifica asociaciones, no causas, y no reemplaza decisiones institucionales.</li>
  </ul></div>
