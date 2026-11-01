@@ -32,7 +32,12 @@ OBJETIVO = (
 )
 
 # Completar con los nombres completos de los integrantes, p. ej. ["Nombre Apellido", ...]
-INTEGRANTES: list[str] = []
+INTEGRANTES: list[str] = [
+    "Paula Carolina Calvo Pérez",
+    "Juan Sebastián Caviedes Roa",
+    "Jonathan Camilo Flórez Bolívar",
+    "Daniel Santiago Quintero Niño",
+]
 DOCENTE: str = "Dr. Hamilton Rivera Flor"
 
 ENLACE_APP: str = ""     # URL pública en Streamlit Community Cloud

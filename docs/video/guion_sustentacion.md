@@ -5,7 +5,7 @@
 
 | Tiempo | Bloque | Qué decir / mostrar |
 |---|---|---|
-| 0:00–0:30 | **Presentación y problema** | Integrantes [nombres], pilar Educación. La deserción suele detectarse tarde. Pregunta orientadora: ¿cómo transformar datos educativos en conocimiento predictivo para anticipar la deserción? |
+| 0:00–0:30 | **Presentación y problema** | Integrantes: Paula Carolina Calvo Pérez, Juan Sebastián Caviedes Roa, Jonathan Camilo Flórez Bolívar, Daniel Santiago Quintero Niño, pilar Educación. La deserción suele detectarse tarde. Pregunta orientadora: ¿cómo transformar datos educativos en conocimiento predictivo para anticipar la deserción? |
 | 0:30–1:10 | **Dataset y EDA** | UCI 697: 4.424 estudiantes, 36 variables, 3 clases (Deserción 32,1 %, Matriculado 17,9 %, Graduado 49,9 %). Mostrar el Dashboard: matrícula al día (86,6 % vs. 24,7 % de deserción), beca (38,7 % vs. 12,2 %) y rendimiento semestral como señales principales. |
 | 1:10–1:50 | **Preparación de datos** | 0 nulos y 0 duplicados; nombres normalizados (tab oculto en una columna); reglas de consistencia; outliers legítimos conservados (la winsorización se evaluó por validación cruzada). Partición estratificada 80/20 y pipelines sin fuga de información. |
 | 1:50–2:40 | **Modelos y métricas** | Regresión Logística, Random Forest y Gradient Boosting con GridSearchCV de 5 pliegues optimizando macro-F1. Modelo seleccionado por CV: **Gradient Boosting (HistGradientBoosting)** (macro-F1 CV 0,730). En prueba: accuracy 0,729, macro-F1 0,688, balanced accuracy 0,697. Mostrar la sección Comparación de modelos y la matriz de confusión: Matriculado es la clase más difícil. |

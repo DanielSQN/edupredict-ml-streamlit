@@ -1,7 +1,7 @@
 # Contenido base del póster académico — EduPredict AI
 
 > Borrador visual: `docs/poster/poster.html` → `docs/poster/poster_borrador.pdf` (A1 vertical).
-> Los elementos entre corchetes **[ ]** requieren información de los integrantes. No se inventaron nombres, logos ni enlaces.
+> Los elementos entre corchetes **[ ]** siguen pendientes (logo, QR, enlaces públicos y periodo académico).
 
 ---
 
@@ -9,7 +9,7 @@
 
 - **[LOGO OFICIAL CUN]** (insertar archivo oficial en `docs/poster/logo_cun.png`)
 - **Título:** EduPredict AI — Predicción de deserción universitaria con Machine Learning clásico
-- **Integrantes:** [Nombre completo 1], [Nombre completo 2], [Nombre completo 3]
+- **Integrantes:** Paula Carolina Calvo Pérez, Juan Sebastián Caviedes Roa, Jonathan Camilo Flórez Bolívar, Daniel Santiago Quintero Niño
 - **Docente:** Dr. Hamilton Rivera Flor
 - Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN · [Periodo académico]
 

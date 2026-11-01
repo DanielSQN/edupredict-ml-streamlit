@@ -274,4 +274,11 @@ Se conservaron: la estructura de 5 partes, las explicaciones, el EDA completo (e
 
 ## 18. Integrantes
 
-*Pendiente: completar con los nombres completos de los integrantes (también en `src/project_info.py`).*
+| # | Nombre |
+|---|---|
+| 1 | Paula Carolina Calvo Pérez |
+| 2 | Juan Sebastián Caviedes Roa |
+| 3 | Jonathan Camilo Flórez Bolívar |
+| 4 | Daniel Santiago Quintero Niño |
+
+Docente: Dr. Hamilton Rivera Flor.
