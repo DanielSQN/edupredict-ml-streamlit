@@ -544,7 +544,7 @@ def render_comparison(modality: str) -> None:
         )
         if diff < max(w["cv"]["f1_macro"]["desv"], second["cv"]["f1_macro"]["desv"]):
             st.caption("Nota: la diferencia con el segundo modelo es menor que la desviación entre pliegues; "
-                       "ambos tienen un desempeño estadísticamente similar.")
+                       "en la práctica ambos tienen un desempeño similar.")
         best_test = max(models, key=lambda k: models[k]["prueba"]["f1_macro"])
         if best_test != winner:
             st.caption(

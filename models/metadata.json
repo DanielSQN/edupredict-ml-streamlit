@@ -487,5 +487,5 @@
     "joblib": "1.6.0"
   },
   "regenerar": "python -m src.train",
-  "generado_utc": "2026-11-01T14:12:35+00:00"
+  "generado_utc": "2026-11-01T14:23:53+00:00"
 }

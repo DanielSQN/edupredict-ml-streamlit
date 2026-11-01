@@ -142,7 +142,7 @@
         },
         "roc_auc_ovr_macro": 0.8826560156102615
       },
-      "tiempo_busqueda_s": 38.4
+      "tiempo_busqueda_s": 12.9
     },
     "rf": {
       "nombre": "Random Forest",
@@ -278,7 +278,7 @@
         },
         "roc_auc_ovr_macro": 0.8904185693825794
       },
-      "tiempo_busqueda_s": 190.9
+      "tiempo_busqueda_s": 118.3
     },
     "hgb": {
       "nombre": "Gradient Boosting (HistGradientBoosting)",
@@ -415,7 +415,7 @@
         },
         "roc_auc_ovr_macro": 0.8811417736959285
       },
-      "tiempo_busqueda_s": 61.2
+      "tiempo_busqueda_s": 60.5
     }
   },
   "importancia_permutacion_prueba": [
@@ -510,5 +510,5 @@
       "importancia_desv": 0.00243048711320756
     }
   ],
-  "generado_utc": "2026-11-01T14:12:35+00:00"
+  "generado_utc": "2026-11-01T14:23:53+00:00"
 }

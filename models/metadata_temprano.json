@@ -444,5 +444,5 @@
     "joblib": "1.6.0"
   },
   "regenerar": "python -m src.train",
-  "generado_utc": "2026-11-01T14:15:42+00:00"
+  "generado_utc": "2026-11-01T14:24:00+00:00"
 }
