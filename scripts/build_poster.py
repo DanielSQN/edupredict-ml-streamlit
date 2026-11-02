@@ -14,6 +14,7 @@ espacio reservado: nada se inventa.
 from __future__ import annotations
 
 import html
+import re
 import json
 import sys
 from pathlib import Path
@@ -33,6 +34,11 @@ def f3(x: float) -> str:
 
 def load(name: str) -> dict:
     return json.loads((ROOT / "models" / name).read_text(encoding="utf-8"))
+
+
+def apa(text: str) -> str:
+    """Escapa el texto y convierte *cursiva* en <i>cursiva</i> (formato APA)."""
+    return re.sub(r"\*(.+?)\*", r"<i>\1</i>", html.escape(text))
 
 
 def placeholder(text: str, cls: str = "ph") -> str:
@@ -96,18 +102,18 @@ def build() -> Path:
 @page {{ size: 594mm 841mm; margin: 0; }}
 * {{ box-sizing: border-box; }}
 body {{ margin:0; font-family: 'Segoe UI', Inter, Helvetica, Arial, sans-serif; color:#1B2433; background:#fff; }}
-.poster {{ width:594mm; height:841mm; padding:18mm; display:flex; flex-direction:column; gap:9mm; }}
-header {{ background:linear-gradient(120deg,#0B2545,#13315C); color:#fff; border-radius:8mm; padding:12mm 14mm;
+.poster {{ width:594mm; height:841mm; padding:16mm 18mm; display:flex; flex-direction:column; gap:7mm; }}
+header {{ background:linear-gradient(120deg,#0B2545,#13315C); color:#fff; border-radius:8mm; padding:10mm 14mm;
           display:flex; align-items:center; gap:12mm; }}
 header h1 {{ font-size:62pt; margin:0; letter-spacing:-1px; }}
 header h2 {{ font-size:26pt; margin:2mm 0 4mm; font-weight:500; color:#DCE3EE; }}
 header p {{ font-size:19pt; margin:1mm 0; color:#DCE3EE; }}
-.logo {{ width:70mm; height:45mm; object-fit:contain; background:#fff; border-radius:4mm; }}
+.logo {{ width:78mm; height:42mm; object-fit:contain; background:#fff; border-radius:4mm; padding:3mm 4mm; }}
 .ph {{ border:2px dashed #9AA7BD; color:#5B6577; display:flex; align-items:center; justify-content:center;
        border-radius:4mm; font-size:16pt; text-align:center; background:#F4F6FA; }}
 header .ph {{ color:#DCE3EE; background:transparent; border-color:#DCE3EE; }}
-.grid {{ display:grid; grid-template-columns: 1fr 1fr; gap:9mm; }}
-.card {{ border:1px solid #E6E9EF; border-radius:6mm; padding:8mm 9mm; background:#fff; }}
+.grid {{ display:grid; grid-template-columns: 1fr 1fr; gap:8mm; }}
+.card {{ border:1px solid #E6E9EF; border-radius:6mm; padding:7mm 9mm; background:#fff; }}
 .card h3 {{ margin:0 0 4mm; font-size:27pt; color:#0B2545; border-left:8px solid #13315C; padding-left:4mm; }}
 .card p, .card li {{ font-size:18pt; line-height:1.4; margin:1.5mm 0; }}
 .q {{ font-style:italic; color:#13315C; font-weight:600; }}
@@ -125,10 +131,12 @@ td.diag {{ background:#13315C; color:#fff; font-weight:700; }}
 .dot {{ display:inline-block; width:4mm; height:4mm; border-radius:50%; margin-right:2mm; }}
 .imp {{ display:grid; grid-template-columns: 95mm 1fr 22mm; align-items:center; gap:3mm; font-size:15pt; margin:2mm 0; }}
 .imp .bar {{ height:6mm; background:#13315C; border-radius:0 2mm 2mm 0; }}
-.shot {{ width:100%; height:125mm; object-fit:cover; object-position:top; border-radius:4mm; border:1px solid #E6E9EF; }}
-.refs li {{ font-size:13pt; }}
-.qrs {{ display:flex; gap:8mm; }} .qrbox {{ flex:1; display:flex; gap:4mm; align-items:center; font-size:14pt; }}
-.qrbox img, .ph.qr {{ width:38mm; height:38mm; flex:none; }}
+.shot {{ width:100%; height:92mm; object-fit:cover; object-position:top; border-radius:4mm; border:1px solid #E6E9EF; }}
+.refs {{ grid-column: span 1; }} .ref {{ font-size:11.5pt !important; line-height:1.3 !important; padding-left:8mm; text-indent:-8mm; margin:0 0 1.6mm !important; word-break:break-word; }}
+.cite {{ font-weight:500; color:#5B6577; font-size:22pt; }}
+.lbl {{ font-size:13pt !important; line-height:1.25 !important; margin:2mm 0 1.5mm !important; color:#1B2433; }}
+.qrs {{ display:flex; flex-direction:column; gap:4mm; }} .qrbox {{ flex:1; display:flex; gap:4mm; align-items:center; font-size:14pt; }}
+.qrbox img, .ph.qr {{ width:34mm; height:34mm; flex:none; }} .qrbox {{ word-break:break-all; }}
 .note {{ font-size:13pt; color:#5B6577; }}
 </style></head><body><div class="poster">
 <header>{logo_html}<div>
@@ -145,7 +153,7 @@ td.diag {{ background:#13315C; color:#fff; font-weight:700; }}
  <div class="card"><h3>Objetivo</h3><p>{html.escape(info.OBJETIVO)}</p></div>
 </div>
 
-<div class="card"><h3>Pilar: Educación · Dataset UCI 697 — Predict Students' Dropout and Academic Success</h3>
+<div class="card"><h3>Pilar: Educación · Dataset UCI 697 <span class='cite'>(Realinho et al., 2021)</span></h3>
  <div class="kpis">
   <div class="kpi"><b>{meta['dataset']['filas']:,}</b><span>estudiantes</span></div>
   <div class="kpi"><b>36</b><span>variables predictoras</span></div>
@@ -155,25 +163,29 @@ td.diag {{ background:#13315C; color:#fff; font-weight:700; }}
  </div></div>
 
 <div class="card"><h3>Metodología</h3><div class="flow">{flow}</div>
- <p class="note">Algoritmos: Regresión Logística · Random Forest · HistGradientBoosting. Desbalance tratado con
+ <p class="note">Algoritmos implementados con scikit-learn (Pedregosa et al., 2011): Regresión Logística · Random Forest (Breiman, 2001) · HistGradientBoosting (Friedman, 2001; Ke et al., 2017). Desbalance tratado con
  <code>class_weight</code> como hiperparámetro. Modelo adicional de alerta temprana sin variables del 2.º semestre.</p></div>
 
 <div class="grid">
- <div class="card"><h3>Comparación de modelos (prueba, n = {meta['particion']['n_prueba']})</h3>
+ <div class="card"><h3>Comparación de modelos</h3>
+  <p class='lbl'><b>Tabla 1</b><br><i>Desempeño de los tres algoritmos (prueba, n = {meta['particion']['n_prueba']})</i></p>
   <table><tr><th>Modelo</th><th>Macro-F1 CV</th><th>Accuracy</th><th>Macro-F1</th><th>Bal. acc.</th></tr>{rows}</table>
-  <p class="note">Selección por macro-F1 medio en validación cruzada de 5 pliegues; el conjunto de prueba no interviene en la selección.</p>
+  <p class="note"><i>Nota.</i> Selección por macro-F1 medio en validación cruzada de 5 pliegues; el conjunto de prueba no interviene en la selección.</p>
+  <p class='lbl'><b>Tabla 2</b><br><i>Métricas por clase del modelo seleccionado</i></p>
   <table><tr><th>Clase ({html.escape(sel['nombre'].split(' (')[0])})</th><th>Precisión</th><th>Recall</th><th>F1</th></tr>{per_class}</table>
  </div>
  <div class="card"><h3>Matriz de confusión e importancia</h3>
-  <table>{cm_html}</table><br>{imp_html}
-  <p class="note">Importancia por permutación: caída de macro-F1 al permutar cada variable (asociación, no causalidad).</p>
+  <p class='lbl'><b>Tabla 3</b><br><i>Matriz de confusión en el conjunto de prueba</i></p>
+  <table>{cm_html}</table>
+  <p class='lbl'><b>Figura 1</b><br><i>Variables más influyentes (importancia por permutación)</i></p>{imp_html}
+  <p class="note"><i>Nota.</i> Caída de macro-F1 al permutar cada variable (asociación, no causalidad).</p>
   <p><b>Alerta temprana</b> ({html.escape(sel_e['nombre'].split(' (')[0])}): macro-F1 CV {f3(sel_e['cv']['f1_macro']['media'])} ·
   macro-F1 prueba {f3(sel_e['prueba']['f1_macro'])} · accuracy {f3(sel_e['prueba']['accuracy'])}.</p>
  </div>
 </div>
 
 <div class="grid">
- <div class="card"><h3>Aplicación Streamlit</h3><img class="shot" src="../capturas/prediccion.png" alt="Captura"></div>
+ <div class="card"><h3>Aplicación Streamlit</h3><p class='lbl'><b>Figura 2</b><br><i>Módulo de predicción individual de la aplicación</i></p><img class="shot" src="../capturas/prediccion.png" alt="Captura"><p class="note"><i>Nota.</i> Aplicación desarrollada con Streamlit (Streamlit Inc., 2026).</p></div>
  <div class="card"><h3>Conclusiones</h3><ul>
   <li>Los tres algoritmos obtienen desempeños cercanos; {html.escape(sel['nombre'].split(' (')[0])} fue seleccionado por validación cruzada.</li>
   <li>Las unidades aprobadas por semestre y la matrícula al día son las variables de las que más depende el modelo.</li>
@@ -183,8 +195,8 @@ td.diag {{ background:#13315C; color:#fff; font-weight:700; }}
  </ul></div>
 </div>
 
-<div class="grid">
- <div class="card refs"><h3>Referencias</h3><ul>{''.join(f'<li>{html.escape(r)}</li>' for r in info.REFERENCIAS_APA[:4])}</ul></div>
+<div class="grid" style="grid-template-columns:1.55fr 1fr">
+ <div class="card refs"><h3>Referencias</h3>{''.join(f'<p class="ref">{apa(r)}</p>' for r in info.REFERENCIAS_APA)}</div>
  <div class="card"><h3>Enlaces</h3><div class="qrs">{qr('App', info.ENLACE_APP)}{qr('Video', info.ENLACE_VIDEO)}{qr('Repositorio', info.ENLACE_REPO)}</div></div>
 </div>
 </div></body></html>"""

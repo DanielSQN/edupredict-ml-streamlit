@@ -6,7 +6,7 @@ Uso::
     python -m src.train --download # descarga primero el CSV oficial de UCI
 
 Protocolo (idéntico para las dos modalidades, *completo* y *temprano*), basado
-en la Parte 3–4 del notebook borrador ``ACA1_Borrador_Student_Dropout``:
+en las Partes 3–4 del notebook ``ACA1_Student_Dropout`` (basado en el borrador del equipo):
 
 1. Limpieza determinista (``data_loader.clean_dataset``).
 2. División estratificada 80/20 con ``RANDOM_STATE = 42``. El 20 % de prueba

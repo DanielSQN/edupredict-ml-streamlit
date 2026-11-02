@@ -1,17 +1,17 @@
 # Contenido base del póster académico — EduPredict AI
 
-> Borrador visual: `docs/poster/poster.html` → `docs/poster/poster_borrador.pdf` (A1 vertical).
-> Los elementos entre corchetes **[ ]** siguen pendientes (logo, QR, enlaces públicos y periodo académico).
+> Póster final: `docs/poster/poster.html` → `docs/poster/poster_EduPredictAI.pdf` (A1 vertical).
+> El periodo académico no aparece en el póster final; agréguelo si el docente lo exige.
 
 ---
 
 ## Encabezado
 
-- **[LOGO OFICIAL CUN]** (insertar archivo oficial en `docs/poster/logo_cun.png`)
+- Logo oficial CUN: `docs/poster/logo_cun.png`
 - **Título:** EduPredict AI — Predicción de deserción universitaria con Machine Learning clásico
 - **Integrantes:** Paula Carolina Calvo Pérez, Juan Sebastián Caviedes Roa, Jonathan Camilo Flórez Bolívar, Daniel Santiago Quintero Niño
 - **Docente:** Dr. Hamilton Rivera Flor
-- Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN · [Periodo académico]
+- Aprendizaje Automático · Especialización en Inteligencia Artificial · CUN
 
 ## Problema
 
@@ -70,12 +70,17 @@ Alerta temprana (sin 2.º semestre, Gradient Boosting): macro-F1 CV 0,699 · acc
 
 ## Referencias (APA 7)
 
-- Realinho, V., Vieira Martins, M., Machado, J., & Baptista, L. (2021). *Predict Students' Dropout and Academic Success* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5MC89
-- Realinho, V., Machado, J., Baptista, L., & Martins, M. V. (2022). Predicting student dropout and academic success. *Data, 7*(11), 146. https://doi.org/10.3390/data7110146
-- Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830.
+- Breiman, L. (2001). Random forests. *Machine Learning, 45*(1), 5–32. https://doi.org/10.1023/A:1010933404324
+- Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. *The Annals of Statistics, 29*(5), 1189–1232. https://doi.org/10.1214/aos/1013203451
+- Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., & Liu, T.-Y. (2017). LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural Information Processing Systems, 30*, 3146–3154.
+- Martins, M. V., Tolledo, D., Machado, J., Baptista, L. M. T., & Realinho, V. (2021). Early prediction of student's performance in higher education: A case study. En Á. Rocha, H. Adeli, G. Dzemyda, F. Moreira, & A. M. Ramalho Correia (Eds.), *Trends and applications in information systems and technologies* (pp. 166–175). Springer. https://doi.org/10.1007/978-3-030-72657-7_16
+- Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830. https://jmlr.org/papers/v12/pedregosa11a.html
+- Realinho, V., Machado, J., Baptista, L., & Martins, M. V. (2022). Predicting student dropout and academic success. *Data, 7*(11), Artículo 146. https://doi.org/10.3390/data7110146
+- Realinho, V., Vieira Martins, M., Machado, J., & Baptista, L. (2021). *Predict students' dropout and academic success* [Conjunto de datos]. UCI Machine Learning Repository. https://doi.org/10.24432/C5MC89
+- Streamlit Inc. (2026). *Streamlit* (Versión 1.66.1) [Software]. https://streamlit.io
 
 ## Enlaces y códigos QR
 
-- Aplicación Streamlit: [URL pública] → [QR]
-- Video: [URL pública] → [QR]
-- Repositorio: https://github.com/DanielSQN/edupredict-ml-streamlit → [QR]
+- Aplicación Streamlit: https://edupredict-ml-app-cv2fdreafkspczy39oa7nu.streamlit.app/ → `qr_app.png`
+- Video: https://www.youtube.com/watch?v=BEmN8dqMv-o → `qr_video.png`
+- Repositorio: https://github.com/DanielSQN/edupredict-ml-streamlit → `qr_repositorio.png`
